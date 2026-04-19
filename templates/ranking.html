@@ -3,510 +3,286 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Resume Ranking Results</title>
+    <title>ATS Dashboard Results</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <div class="page">
-        <div class="container">
-            <div class="top-bar">
-                <div>
-                    <h1>Resume Ranking Results</h1>
-                    <p class="subtext">AI Resume Screener & Job Match Scorer — Ranked by final match score</p>
-                </div>
-                <a href="/" class="secondary-btn">Analyze Another Resume</a>
+<div class="page">
+    <div class="container">
+
+        <div class="top-bar glass-card">
+            <div>
+                <p class="eyebrow">AI Resume Screener v2.0</p>
+                <h1>ATS Ranking Dashboard</h1>
+                <p class="subtext">Semantic matching, skill fit, responsibility fit, experience fit, and explainable ranking.</p>
             </div>
-
-            {% if top_summary %}
-            <div class="section-card summary-card">
-                <div class="summary-header">
-                    <div>
-                        <h2>Top Resume Insight</h2>
-                        <p class="subtext">
-                            Best among uploaded resumes: <strong>{{ top_summary.resume_filename }}</strong>
-                        </p>
-                    </div>
-
-                    <div class="summary-score">
-                        <div class="summary-score-value">{{ top_summary.match_score }}%</div>
-                        <div class="summary-score-label">{{ top_summary.match_label }}</div>
-                    </div>
-                </div>
-
-                <div class="two-column">
-                    <div>
-                        <p><strong>Role Used:</strong> {{ top_summary.role_used.replace("_", " ").title() }}</p>
-                        <p><strong>Matched Skills:</strong> {{ top_summary.matched_count }}</p>
-                        <p><strong>Missing Skills:</strong> {{ top_summary.missing_count }}</p>
-                    </div>
-
-                    <div>
-                        <h3>Why this ranked #1</h3>
-                        <ul>
-                            {% for reason in top_summary.why_top %}
-                                <li>{{ reason }}</li>
-                            {% endfor %}
-                        </ul>
-                    </div>
-                </div>
-
-                <p class="subtext" style="margin-top: 10px;">
-                    Ranking is relative to uploaded resumes. A resume can rank #1 in this batch and still have a low overall match if all uploaded resumes score low.
-                </p>
+            <div class="top-actions">
+                <a href="/" class="secondary-btn">Analyze Again</a>
+                <a href="/download-report" class="primary-btn">Export Top PDF Report</a>
             </div>
-            {% endif %}
-
-            {% if comparison_chart and results|length > 1 %}
-            <div class="section-card">
-                <h2>Resume Comparison Overview</h2>
-                <div style="position: relative; height: 380px; width: 100%;">
-                    <canvas id="rankingChart"></canvas>
-                </div>
-            </div>
-            {% endif %}
-
-            {% if radar_chart and results|length > 0 %}
-            <div class="section-card">
-                <h2>Resume Radar Comparison</h2>
-                <div style="position: relative; height: 420px; width: 100%;">
-                    <canvas id="radarChart"></canvas>
-                </div>
-            </div>
-            {% endif %}
-
-            {% if results %}
-                {% if results|length <= 3 %}
-                <div class="compare-grid">
-                    {% for result in results %}
-                    <div class="section-card ranking-card compare-card">
-                        <div class="ranking-header">
-                            <div>
-                                {% if result.rank == 1 %}
-                                    <span class="top-badge">Top Match in this batch</span>
-                                {% endif %}
-                                <span class="rank-chip rank-{{ result.rank if result.rank <= 3 else 'other' }}">#{{ result.rank }}</span>
-                                <span class="detail-title">{{ result.resume_filename }}</span>
-                            </div>
-                            <div class="score-value">{{ result.match_score }}%</div>
-                        </div>
-
-                        <div class="meta-info">
-                            <p><strong>Match Label:</strong> {{ result.match_label }}</p>
-                            <p><strong>Role Used:</strong> {{ result.role_used.replace("_", " ").title() }}</p>
-                        </div>
-
-                        {% if result.badges %}
-                        <div class="badge-container" style="margin: 10px 0 4px 0;">
-                            {% for badge in result.badges %}
-                                <span class="badge neutral">{{ badge }}</span>
-                            {% endfor %}
-                        </div>
-                        {% endif %}
-
-                        {% if result.rank == 1 and top_summary %}
-                        <div class="section-card inner-card winner-card">
-                            <h3>Why This Resume Ranked First</h3>
-                            <ul>
-                                {% for reason in top_summary.why_top %}
-                                    <li>{{ reason }}</li>
-                                {% endfor %}
-                            </ul>
-                        </div>
-                        {% endif %}
-
-                        {% if result.ai_explanation %}
-                        <div class="section-card inner-card">
-                            <h2>AI Match Explanation</h2>
-                            <p>{{ result.ai_explanation }}</p>
-                        </div>
-                        {% endif %}
-
-                        <div class="section-card inner-card">
-                            <h2>Weighted Score Breakdown</h2>
-                            <div class="score-grid compact-grid">
-                                <div class="score-card">
-                                    <h3>Skill</h3>
-                                    <div class="score-value">{{ result.weighted_breakdown.skill }}%</div>
-                                </div>
-                                <div class="score-card">
-                                    <h3>Similarity</h3>
-                                    <div class="score-value">{{ result.weighted_breakdown.similarity }}%</div>
-                                </div>
-                                <div class="score-card">
-                                    <h3>Experience</h3>
-                                    <div class="score-value">{{ result.weighted_breakdown.experience }}%</div>
-                                </div>
-                                <div class="score-card">
-                                    <h3>Projects</h3>
-                                    <div class="score-value">{{ result.weighted_breakdown.projects }}%</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="score-grid compact-grid">
-                            <div class="score-card">
-                                <h3>Skill Coverage</h3>
-                                <div class="score-value">{{ result.skill_coverage }}%</div>
-                            </div>
-                            <div class="score-card">
-                                <h3>Similarity</h3>
-                                <div class="score-value">{{ result.overall_similarity }}%</div>
-                            </div>
-                            <div class="score-card">
-                                <h3>Experience</h3>
-                                <div class="score-value">{{ result.experience_score }}%</div>
-                            </div>
-                            <div class="score-card">
-                                <h3>Projects</h3>
-                                <div class="score-value">{{ result.project_score }}%</div>
-                            </div>
-                        </div>
-
-                        <div class="section-card inner-card">
-                            <h2>Matched Skills</h2>
-                            {% if result.matched_skills %}
-                                <div class="badge-container">
-                                    {% for skill in result.matched_skills %}
-                                        <span class="badge success">{{ skill }}</span>
-                                    {% endfor %}
-                                </div>
-                            {% else %}
-                                <p>No matched skills found.</p>
-                            {% endif %}
-                        </div>
-
-                        <div class="section-card inner-card">
-                            <h2>Missing Skills</h2>
-                            {% if result.missing_skills %}
-                                <div class="badge-container">
-                                    {% for skill in result.missing_skills %}
-                                        <span class="badge danger">{{ skill }}</span>
-                                    {% endfor %}
-                                </div>
-                            {% else %}
-                                <p>No missing skills found.</p>
-                            {% endif %}
-                        </div>
-
-                        <div class="two-column compare-columns">
-                            <div class="section-card inner-card">
-                                <h2>Strengths</h2>
-                                {% if result.strengths %}
-                                    <ul>
-                                        {% for item in result.strengths %}
-                                            <li>{{ item }}</li>
-                                        {% endfor %}
-                                    </ul>
-                                {% else %}
-                                    <p>No strengths summary available.</p>
-                                {% endif %}
-                            </div>
-
-                            <div class="section-card inner-card">
-                                <h2>Suggestions</h2>
-                                {% if result.suggestions %}
-                                    <ul>
-                                        {% for suggestion in result.suggestions %}
-                                            <li>{{ suggestion }}</li>
-                                        {% endfor %}
-                                    </ul>
-                                {% else %}
-                                    <p>No suggestions available.</p>
-                                {% endif %}
-                            </div>
-                        </div>
-
-                        <div class="two-column">
-                            <div class="section-card inner-card">
-                                <h2>Resume Skill Categories</h2>
-                                {% if result.resume_categories %}
-                                    {% for category, skills in result.resume_categories.items() %}
-                                        <div class="category-block">
-                                            <p class="category-title">{{ category.replace("_", " ").title() }}</p>
-                                            <div class="badge-container">
-                                                {% for skill in skills %}
-                                                    <span class="badge neutral">{{ skill }}</span>
-                                                {% endfor %}
-                                            </div>
-                                        </div>
-                                    {% endfor %}
-                                {% else %}
-                                    <p>No categorized skills detected in the resume.</p>
-                                {% endif %}
-                            </div>
-
-                            <div class="section-card inner-card">
-                                <h2>Job Description Skill Categories</h2>
-                                {% if result.jd_categories %}
-                                    {% for category, skills in result.jd_categories.items() %}
-                                        <div class="category-block">
-                                            <p class="category-title">{{ category.replace("_", " ").title() }}</p>
-                                            <div class="badge-container">
-                                                {% for skill in skills %}
-                                                    <span class="badge neutral">{{ skill }}</span>
-                                                {% endfor %}
-                                            </div>
-                                        </div>
-                                    {% endfor %}
-                                {% else %}
-                                    <p>No categorized skills detected in the job description.</p>
-                                {% endif %}
-                            </div>
-                        </div>
-
-                        <div class="two-column">
-                            <div class="section-card inner-card">
-                                <h2>Extracted Contact Information</h2>
-                                {% if result.contact_info %}
-                                    <p><strong>Email:</strong> {{ result.contact_info.email or "Not detected" }}</p>
-                                    <p><strong>Phone:</strong> {{ result.contact_info.phone or "Not detected" }}</p>
-                                    <p><strong>LinkedIn:</strong> {{ result.contact_info.linkedin or "Not detected" }}</p>
-                                    <p><strong>GitHub:</strong> {{ result.contact_info.github or "Not detected" }}</p>
-                                {% else %}
-                                    <p>No contact information detected.</p>
-                                {% endif %}
-                            </div>
-
-                            <div class="section-card inner-card">
-                                <h2>Detected Resume Sections</h2>
-                                {% if result.resume_sections %}
-                                    <ul>
-                                        {% for section_name, section_text in result.resume_sections.items() %}
-                                            <li>
-                                                <strong>{{ section_name.replace("_", " ").title() }}</strong>
-                                                {% if section_text %} — detected{% endif %}
-                                            </li>
-                                        {% endfor %}
-                                    </ul>
-                                {% else %}
-                                    <p>No resume sections detected.</p>
-                                {% endif %}
-                            </div>
-                        </div>
-
-                        <div class="two-column">
-                            <div class="section-card inner-card">
-                                <h2>Resume Preview</h2>
-                                <div class="preview-box">{{ result.resume_preview }}</div>
-                            </div>
-
-                            <div class="section-card inner-card">
-                                <h2>Job Description Preview</h2>
-                                <div class="preview-box">{{ result.job_description_preview }}</div>
-                            </div>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-
-                {% else %}
-                    {% for result in results %}
-                    <div class="section-card ranking-card">
-                        <div class="ranking-header">
-                            <div>
-                                {% if result.rank == 1 %}
-                                    <span class="top-badge">Top Match in this batch</span>
-                                {% endif %}
-                                <span class="rank-chip rank-{{ result.rank if result.rank <= 3 else 'other' }}">#{{ result.rank }}</span>
-                                <span class="detail-title">{{ result.resume_filename }}</span>
-                            </div>
-                            <div class="score-value">{{ result.match_score }}%</div>
-                        </div>
-
-                        <div class="meta-info">
-                            <p><strong>Match Label:</strong> {{ result.match_label }}</p>
-                            <p><strong>Role Used:</strong> {{ result.role_used.replace("_", " ").title() }}</p>
-                        </div>
-
-                        {% if result.badges %}
-                        <div class="badge-container" style="margin: 10px 0 4px 0;">
-                            {% for badge in result.badges %}
-                                <span class="badge neutral">{{ badge }}</span>
-                            {% endfor %}
-                        </div>
-                        {% endif %}
-
-                        {% if result.rank == 1 and top_summary %}
-                        <div class="section-card inner-card winner-card">
-                            <h3>Why This Resume Ranked First</h3>
-                            <ul>
-                                {% for reason in top_summary.why_top %}
-                                    <li>{{ reason }}</li>
-                                {% endfor %}
-                            </ul>
-                        </div>
-                        {% endif %}
-
-                        {% if result.ai_explanation %}
-                        <div class="section-card inner-card">
-                            <h2>AI Match Explanation</h2>
-                            <p>{{ result.ai_explanation }}</p>
-                        </div>
-                        {% endif %}
-
-                        <div class="section-card inner-card">
-                            <h2>Weighted Score Breakdown</h2>
-                            <div class="score-grid compact-grid">
-                                <div class="score-card">
-                                    <h3>Skill</h3>
-                                    <div class="score-value">{{ result.weighted_breakdown.skill }}%</div>
-                                </div>
-                                <div class="score-card">
-                                    <h3>Similarity</h3>
-                                    <div class="score-value">{{ result.weighted_breakdown.similarity }}%</div>
-                                </div>
-                                <div class="score-card">
-                                    <h3>Experience</h3>
-                                    <div class="score-value">{{ result.weighted_breakdown.experience }}%</div>
-                                </div>
-                                <div class="score-card">
-                                    <h3>Projects</h3>
-                                    <div class="score-value">{{ result.weighted_breakdown.projects }}%</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="score-grid">
-                            <div class="score-card">
-                                <h3>Skill Coverage</h3>
-                                <div class="score-value">{{ result.skill_coverage }}%</div>
-                            </div>
-                            <div class="score-card">
-                                <h3>Overall Similarity</h3>
-                                <div class="score-value">{{ result.overall_similarity }}%</div>
-                            </div>
-                            <div class="score-card">
-                                <h3>Experience Score</h3>
-                                <div class="score-value">{{ result.experience_score }}%</div>
-                            </div>
-                            <div class="score-card">
-                                <h3>Project Score</h3>
-                                <div class="score-value">{{ result.project_score }}%</div>
-                            </div>
-                        </div>
-                    </div>
-                    {% endfor %}
-                {% endif %}
-
-                <div class="download-row">
-                    <a href="/download-report" class="primary-btn">Download Top Resume Report</a>
-                </div>
-            {% else %}
-                <div class="section-card">
-                    <p>No ranking results available.</p>
-                </div>
-            {% endif %}
         </div>
-    </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        {% if top_summary %}
+        <div class="section-card glass-card summary-hero">
+            <div class="summary-left">
+                <p class="eyebrow">Top Candidate</p>
+                <h2>{{ top_summary.candidate_name }}</h2>
+                <p><strong>Resume:</strong> {{ top_summary.resume_filename }}</p>
+                <p><strong>Domain:</strong> {{ top_summary.job_domain.replace("_", " ").title() }}</p>
+            </div>
+            <div class="summary-right">
+                <div class="hero-score">{{ top_summary.match_score }}%</div>
+                <div class="hero-label">{{ top_summary.match_label }}</div>
+            </div>
+        </div>
 
-    {% if comparison_chart and results|length > 1 %}
-    <script>
-        const canvas = document.getElementById('rankingChart');
+        <div class="section-card glass-card">
+            <h3>Why this ranked #1</h3>
+            <ul>
+                {% for reason in top_summary.why_top %}
+                <li>{{ reason }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
 
-        if (canvas) {
-            const existingChart = Chart.getChart(canvas);
-            if (existingChart) {
-                existingChart.destroy();
-            }
+        {% if comparison_chart %}
+        <div class="section-card glass-card">
+            <h2>Candidate Comparison</h2>
+            <div class="chart-wrap">
+                <canvas id="rankingChart"></canvas>
+            </div>
+        </div>
+        {% endif %}
 
-            new Chart(canvas, {
-                type: 'bar',
-                data: {
-                    labels: {{ comparison_chart.labels | tojson }},
-                    datasets: [
-                        {
-                            label: 'Final Score',
-                            data: {{ comparison_chart.match_scores | tojson }},
-                            backgroundColor: '#4f46e5',
-                            borderRadius: 8
-                        },
-                        {
-                            label: 'Skill Coverage',
-                            data: {{ comparison_chart.skill_scores | tojson }},
-                            backgroundColor: '#10b981',
-                            borderRadius: 8
-                        },
-                        {
-                            label: 'Similarity',
-                            data: {{ comparison_chart.similarity_scores | tojson }},
-                            backgroundColor: '#f59e0b',
-                            borderRadius: 8
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    animation: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            min: 0,
-                            max: 100,
-                            ticks: {
-                                stepSize: 10
-                            }
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            position: 'top'
-                        }
-                    }
-                }
-            });
-        }
-    </script>
-    {% endif %}
+        {% if radar_chart %}
+        <div class="section-card glass-card">
+            <h2>Top 3 Radar Comparison</h2>
+            <div class="chart-wrap">
+                <canvas id="radarChart"></canvas>
+            </div>
+        </div>
+        {% endif %}
 
-    {% if radar_chart and results|length > 0 %}
-    <script>
-        const radarCanvas = document.getElementById('radarChart');
+        {% for result in results %}
+        <div class="section-card glass-card candidate-card">
+            <div class="candidate-top">
+                <div>
+                    <div class="candidate-line">
+                        <span class="rank-chip">#{{ result.rank }}</span>
+                        <h2>{{ result.candidate_name }}</h2>
+                    </div>
+                    <p class="subtext">{{ result.resume_filename }}</p>
+                    <p><strong>Domain:</strong> {{ result.job_domain.replace("_", " ").title() }}</p>
+                </div>
 
-        if (radarCanvas) {
-            const existingRadar = Chart.getChart(radarCanvas);
-            if (existingRadar) {
-                existingRadar.destroy();
-            }
+                <div class="candidate-score-box">
+                    <div class="score-value big-score">{{ result.match_score }}%</div>
+                    <div class="score-pill">{{ result.match_label }}</div>
+                </div>
+            </div>
 
-            new Chart(radarCanvas, {
-                type: 'radar',
-                data: {
-                    labels: {{ radar_chart.labels | tojson }},
-                    datasets: [
-                        {% for ds in radar_chart.datasets %}
-                        {
-                            label: {{ ds.label | tojson }},
-                            data: {{ ds.data | tojson }},
-                            fill: true
-                        }{% if not loop.last %},{% endif %}
+            {% if result.badges %}
+            <div class="badge-container">
+                {% for badge in result.badges %}
+                <span class="badge neutral">{{ badge }}</span>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="action-row">
+                <button class="decision-btn shortlist-btn" type="button">Shortlist</button>
+                <button class="decision-btn reject-btn" type="button">Reject</button>
+            </div>
+
+            <div class="inner-card soft-card">
+                <h3>AI Explanation</h3>
+                <p>{{ result.ai_explanation }}</p>
+            </div>
+
+            <div class="score-grid">
+                <div class="score-card">
+                    <h3>Semantic</h3>
+                    <div class="score-value">{{ result.semantic_score }}%</div>
+                </div>
+                <div class="score-card">
+                    <h3>Skills</h3>
+                    <div class="score-value">{{ result.skill_coverage }}%</div>
+                </div>
+                <div class="score-card">
+                    <h3>Responsibilities</h3>
+                    <div class="score-value">{{ result.responsibility_score }}%</div>
+                </div>
+                <div class="score-card">
+                    <h3>Experience</h3>
+                    <div class="score-value">{{ result.experience_score }}%</div>
+                </div>
+                <div class="score-card">
+                    <h3>Education</h3>
+                    <div class="score-value">{{ result.education_score }}%</div>
+                </div>
+            </div>
+
+            <div class="two-column">
+                <div class="inner-card soft-card">
+                    <h3>Matched Skills</h3>
+                    {% if result.matched_skills %}
+                    <div class="badge-container">
+                        {% for skill in result.matched_skills %}
+                        <span class="badge success">{{ skill }}</span>
                         {% endfor %}
-                    ]
+                    </div>
+                    {% else %}
+                    <p>No strongly matched skills found.</p>
+                    {% endif %}
+                </div>
+
+                <div class="inner-card soft-card">
+                    <h3>Missing Skills</h3>
+                    {% if result.missing_skills %}
+                    <div class="badge-container">
+                        {% for skill in result.missing_skills %}
+                        <span class="badge danger">{{ skill }}</span>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p>No major missing skills detected.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="two-column">
+                <div class="inner-card soft-card">
+                    <h3>Strengths</h3>
+                    <ul>
+                        {% for item in result.strengths %}
+                        <li>{{ item }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+
+                <div class="inner-card soft-card">
+                    <h3>Weaknesses</h3>
+                    <ul>
+                        {% for item in result.suggestions %}
+                        <li>{{ item }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+
+            <div class="inner-card soft-card">
+                <h3>Resume Preview</h3>
+                <div class="preview-box">{{ result.resume_preview }}</div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+{% if comparison_chart %}
+<script>
+const barCanvas = document.getElementById('rankingChart');
+if (barCanvas) {
+    const existing = Chart.getChart(barCanvas);
+    if (existing) existing.destroy();
+
+    new Chart(barCanvas, {
+        type: 'bar',
+        data: {
+            labels: {{ comparison_chart.labels | tojson }},
+            datasets: [
+                {
+                    label: 'Final Score',
+                    data: {{ comparison_chart.match_scores | tojson }},
+                    borderRadius: 10
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    animation: false,
-                    scales: {
-                        r: {
-                            min: 0,
-                            max: 100,
-                            ticks: {
-                                stepSize: 20
-                            }
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            position: 'top'
-                        }
-                    }
+                {
+                    label: 'Semantic',
+                    data: {{ comparison_chart.semantic_scores | tojson }},
+                    borderRadius: 10
+                },
+                {
+                    label: 'Skills',
+                    data: {{ comparison_chart.skill_scores | tojson }},
+                    borderRadius: 10
+                },
+                {
+                    label: 'Responsibilities',
+                    data: {{ comparison_chart.responsibility_scores | tojson }},
+                    borderRadius: 10
                 }
-            });
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: false,
+            scales: {
+                y: {
+                    min: 0,
+                    max: 100
+                }
+            }
         }
-    </script>
-    {% endif %}
+    });
+}
+</script>
+{% endif %}
+
+{% if radar_chart %}
+<script>
+const radarCanvas = document.getElementById('radarChart');
+if (radarCanvas) {
+    const existingRadar = Chart.getChart(radarCanvas);
+    if (existingRadar) existingRadar.destroy();
+
+    new Chart(radarCanvas, {
+        type: 'radar',
+        data: {
+            labels: {{ radar_chart.labels | tojson }},
+            datasets: [
+                {% for ds in radar_chart.datasets %}
+                {
+                    label: {{ ds.label | tojson }},
+                    data: {{ ds.data | tojson }},
+                    fill: true
+                }{% if not loop.last %},{% endif %}
+                {% endfor %}
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: false,
+            scales: {
+                r: {
+                    min: 0,
+                    max: 100
+                }
+            }
+        }
+    });
+}
+</script>
+{% endif %}
+
+<script>
+document.querySelectorAll('.shortlist-btn').forEach(btn => {
+    btn.addEventListener('click', function () {
+        this.textContent = 'Shortlisted';
+        this.classList.add('active-shortlist');
+    });
+});
+
+document.querySelectorAll('.reject-btn').forEach(btn => {
+    btn.addEventListener('click', function () {
+        this.textContent = 'Rejected';
+        this.classList.add('active-reject');
+    });
+});
+</script>
 </body>
 </html>

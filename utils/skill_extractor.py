@@ -1,104 +1,169 @@
-import re
+# utils/skill_extractor.py
 
-SKILL_CATEGORIES = {
-    "programming": [
-        "python", "java", "c++", "c#", "javascript"
-    ],
-    "web_development": [
-        "html", "css", "django", "flask", "fastapi", "react", "node.js"
-    ],
-    "databases": [
-        "sql", "mysql", "postgresql", "mongodb"
-    ],
-    "data_science": [
-        "pandas", "numpy", "scikit-learn", "data analysis", "matplotlib"
-    ],
-    "machine_learning": [
-        "machine learning", "deep learning", "nlp", "tensorflow", "pytorch", "transformers"
-    ],
-    "tools": [
-        "git", "github", "docker", "linux"
-    ],
-    "soft_skills": [
-        "communication", "teamwork", "problem solving", "leadership"
-    ]
-}
+"""
+Universal skill extraction utilities
 
-SKILL_ALIASES = {
-    "js": "javascript",
-    "py": "python",
-    "nodejs": "node.js",
-    "sklearn": "scikit-learn",
-    "scikit learn": "scikit-learn",
-    "machine-learning": "machine learning",
-    "deep-learning": "deep learning",
-    "natural language processing": "nlp",
-    "problem-solving": "problem solving",
-    "c plus plus": "c++",
-    "cplusplus": "c++",
-    "c sharp": "c#",
-    "postgres": "postgresql"
-}
+Purpose:
+- extract categorized skills from resume or job description text
+- support all job domains, not only tech
+- identify matched and missing skills
+"""
+
+from utils.constants import SKILL_CATEGORIES
+from utils.text_preprocessor import preprocess_text
 
 
-def normalize_text(text: str) -> str:
-    if not text:
-        return ""
+def extract_skills(text):
+    """
+    Extract categorized skills from text.
 
-    text = text.lower()
-    text = text.replace("/", " ")
-    text = text.replace(",", " ")
-    text = text.replace("•", " ")
-    text = text.replace("\n", " ")
+    Returns:
+        dict: {
+            "technical": [...],
+            "business": [...],
+            ...
+        }
+    """
+    clean_text = preprocess_text(text)
 
-    # keep +, #, . and -
-    text = re.sub(r"[^a-z0-9+#.\s-]", " ", text)
-    text = re.sub(r"\s+", " ", text).strip()
-
-    # replace longer aliases first
-    for alias, standard in sorted(SKILL_ALIASES.items(), key=lambda x: len(x[0]), reverse=True):
-        pattern = rf"(?<!\w){re.escape(alias)}(?!\w)"
-        text = re.sub(pattern, standard, text)
-
-    return text
-
-
-def build_skill_pattern(skill: str) -> str:
-    escaped_skill = re.escape(skill)
-    return rf"(?<!\w){escaped_skill}(?!\w)"
-
-
-def extract_skills(text: str) -> list:
-    if not text:
-        return []
-
-    text = normalize_text(text)
-    found_skills = set()
-
-    for category_skills in SKILL_CATEGORIES.values():
-        for skill in category_skills:
-            pattern = build_skill_pattern(skill)
-            if re.search(pattern, text):
-                found_skills.add(skill)
-
-    return sorted(found_skills)
-
-
-def extract_skills_by_category(text: str) -> dict:
-    if not text:
-        return {}
-
-    text = normalize_text(text)
-    categorized_skills = {}
+    extracted = {}
 
     for category, skills in SKILL_CATEGORIES.items():
-        matched = []
+        found_skills = []
+
         for skill in skills:
-            pattern = build_skill_pattern(skill)
-            if re.search(pattern, text):
-                matched.append(skill)
+            if skill in clean_text:
+                found_skills.append(skill)
 
-        if matched:
-            categorized_skills[category] = sorted(set(matched))
+        extracted[category] = sorted(list(set(found_skills)))
 
-    return categorized_skills
+    return extracted
+
+
+def flatten_skills(skill_dict):
+    """
+    Convert categorized skills into one flat set.
+    """
+    flat = set()
+
+    if not isinstance(skill_dict, dict):
+        return flat
+
+    for _, skills in skill_dict.items():
+        for skill in skills:
+            flat.add(skill)
+
+    return flat
+
+
+def extract_domain_skills(text, domain=None):
+    """
+    Extract all skills, and optionally return only the most relevant domain skills.
+
+    If domain is given, it prioritizes that category plus soft skills.
+    """
+    all_skills = extract_skills(text)
+
+    if not domain:
+        return all_skills
+
+    domain_map = {
+        "technology": "technical",
+        "marketing": "marketing",
+        "sales": "sales",
+        "finance": "finance",
+        "hr": "hr",
+        "education": "education",
+        "healthcare": "healthcare",
+        "operations": "operations",
+        "customer_support": "customer_support",
+        "general": "business"
+    }
+
+    selected_category = domain_map.get(domain, "business")
+
+    filtered = {
+        selected_category: all_skills.get(selected_category, []),
+        "soft_skills": all_skills.get("soft_skills", [])
+    }
+
+    return filtered
+
+
+def get_matched_skills(resume_skills, jd_skills):
+    """
+    Get matched skills between resume and JD.
+
+    Args:
+        resume_skills (dict): categorized resume skills
+        jd_skills (list): required JD skills
+
+    Returns:
+        list
+    """
+    resume_flat = flatten_skills(resume_skills)
+    matched = [skill for skill in jd_skills if skill in resume_flat]
+    return sorted(list(set(matched)))
+
+
+def get_missing_skills(resume_skills, jd_skills):
+    """
+    Get missing JD skills not found in resume.
+
+    Args:
+        resume_skills (dict): categorized resume skills
+        jd_skills (list): required JD skills
+
+    Returns:
+        list
+    """
+    resume_flat = flatten_skills(resume_skills)
+    missing = [skill for skill in jd_skills if skill not in resume_flat]
+    return sorted(list(set(missing)))
+
+
+def get_skill_match_score(resume_skills, jd_skills):
+    """
+    Calculate percentage skill match score.
+
+    Args:
+        resume_skills (dict): categorized extracted resume skills
+        jd_skills (list): required skills from JD
+
+    Returns:
+        float
+    """
+    if not jd_skills:
+        return 0.0
+
+    matched = get_matched_skills(resume_skills, jd_skills)
+    score = (len(matched) / len(set(jd_skills))) * 100
+    return round(score, 2)
+
+
+def extract_required_skills_from_jd(jd_text):
+    """
+    Extract JD skills by scanning universal categories.
+    Returns a flat sorted list.
+    """
+    categorized = extract_skills(jd_text)
+    flat = flatten_skills(categorized)
+    return sorted(list(flat))
+
+
+def get_skill_summary(resume_skills, jd_skills):
+    """
+    Return a useful summary for UI / result page.
+    """
+    matched = get_matched_skills(resume_skills, jd_skills)
+    missing = get_missing_skills(resume_skills, jd_skills)
+    score = get_skill_match_score(resume_skills, jd_skills)
+
+    return {
+        "matched_skills": matched,
+        "missing_skills": missing,
+        "skill_score": score,
+        "total_required_skills": len(set(jd_skills)),
+        "total_matched_skills": len(matched),
+        "total_missing_skills": len(missing)
+    }

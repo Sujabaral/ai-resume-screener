@@ -1,75 +1,120 @@
-import re
+# utils/pdf_parser.py
 
-try:
-    import fitz  # PyMuPDF
-    PYMUPDF_AVAILABLE = True
-except ImportError:
-    PYMUPDF_AVAILABLE = False
+"""
+PDF parsing utilities
 
-try:
-    from PyPDF2 import PdfReader
-    PYPDF2_AVAILABLE = True
-except ImportError:
-    PdfReader = None
-    PYPDF2_AVAILABLE = False
+Primary extractor:
+- PyMuPDF (fitz)
+
+Fallback extractor:
+- PyPDF2
+
+Why this file matters:
+- resumes often have messy formatting
+- PyMuPDF usually extracts cleaner text than PyPDF2
+"""
+
+from io import BytesIO
+
+import fitz  # PyMuPDF
+from PyPDF2 import PdfReader
 
 
-def clean_extracted_text(text: str) -> str:
-    if not text:
+def extract_text_with_pymupdf(file_stream):
+    """
+    Extract text using PyMuPDF.
+    Accepts bytes or a file-like object.
+    """
+    text_chunks = []
+
+    if hasattr(file_stream, "read"):
+        file_bytes = file_stream.read()
+    else:
+        file_bytes = file_stream
+
+    if not file_bytes:
         return ""
 
-    text = text.replace("\u2022", " ")
-    text = text.replace("\u00a0", " ")
+    pdf_document = fitz.open(stream=file_bytes, filetype="pdf")
 
-    text = re.sub(r"(\w+)-\n(\w+)", r"\1\2", text)
-    text = re.sub(r"[ \t]+", " ", text)
-    text = re.sub(r"\n{3,}", "\n\n", text)
+    for page in pdf_document:
+        page_text = page.get_text("text")
+        if page_text:
+            text_chunks.append(page_text)
+
+    pdf_document.close()
+    return "\n".join(text_chunks).strip()
+
+
+def extract_text_with_pypdf2(file_stream):
+    """
+    Fallback extraction using PyPDF2.
+    Accepts bytes or a file-like object.
+    """
+    text_chunks = []
+
+    if hasattr(file_stream, "read"):
+        file_bytes = file_stream.read()
+    else:
+        file_bytes = file_stream
+
+    if not file_bytes:
+        return ""
+
+    pdf_reader = PdfReader(BytesIO(file_bytes))
+
+    for page in pdf_reader.pages:
+        try:
+            page_text = page.extract_text()
+            if page_text:
+                text_chunks.append(page_text)
+        except Exception:
+            continue
+
+    return "\n".join(text_chunks).strip()
+
+
+def extract_text_from_pdf(uploaded_file):
+    """
+    Main PDF extraction function.
+
+    Tries PyMuPDF first, then falls back to PyPDF2.
+    Works with Flask uploaded files.
+    """
+    try:
+        file_bytes = uploaded_file.read()
+    except Exception:
+        return ""
+
+    if not file_bytes:
+        return ""
+
+    # Reset pointer if possible
+    try:
+        uploaded_file.seek(0)
+    except Exception:
+        pass
+
+    text = ""
+
+    # Try PyMuPDF first
+    try:
+        text = extract_text_with_pymupdf(file_bytes)
+    except Exception:
+        text = ""
+
+    # Fallback to PyPDF2 if needed
+    if not text.strip():
+        try:
+            text = extract_text_with_pypdf2(file_bytes)
+        except Exception:
+            text = ""
 
     return text.strip()
 
 
-def extract_text_pymupdf(pdf_path: str) -> str:
-    doc = fitz.open(pdf_path)
-    page_texts = []
-
-    for page in doc:
-        blocks = page.get_text("blocks")
-        blocks = sorted(blocks, key=lambda b: (b[1], b[0]))
-        page_text = "\n".join(block[4].strip() for block in blocks if block[4].strip())
-        page_texts.append(page_text)
-
-    doc.close()
-    return "\n\n".join(page_texts)
-
-
-def extract_text_pypdf2(pdf_path: str) -> str:
-    if not PYPDF2_AVAILABLE:
-        return ""
-
-    reader = PdfReader(pdf_path)
-    texts = []
-
-    for page in reader.pages:
-        page_text = page.extract_text()
-        if page_text:
-            texts.append(page_text)
-
-    return "\n\n".join(texts)
-
-
-def extract_resume_text(pdf_path: str) -> str:
-    text = ""
-
-    if PYMUPDF_AVAILABLE:
-        try:
-            text = extract_text_pymupdf(pdf_path)
-        except Exception:
-            text = ""
-
-    if not text or len(text.strip()) < 100:
-        try:
-            text = extract_text_pypdf2(pdf_path)
-        except Exception:
-            text = ""
-
-    return clean_extracted_text(text)
+def is_pdf_file(filename):
+    """
+    Basic PDF filename validation.
+    """
+    return bool(filename) and filename.lower().endswith(".pdf")
