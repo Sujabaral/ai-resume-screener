@@ -1,7 +1,24 @@
+import re
+
+
 def clean_text(text):
     """
-    Placeholder function.
-    Day 2: This will preprocess text by cleaning spaces,
-    symbols, and unnecessary characters.
+    Cleans extracted text by:
+    - converting to lowercase
+    - removing extra spaces
+    - removing special characters except basic punctuation
+
+    Args:
+        text (str): Raw text
+
+    Returns:
+        str: Cleaned text
     """
-    return text.strip().lower()
+    if not text:
+        return ""
+
+    text = text.lower()
+    text = re.sub(r"\s+", " ", text)
+    text = re.sub(r"[^a-zA-Z0-9,.+#/ ]", "", text)
+
+    return text.strip()

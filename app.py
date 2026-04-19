@@ -1,7 +1,9 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request
 import os
 
 from config import Config
+from utils.pdf_parser import extract_text_from_pdf
+from utils.text_preprocessor import clean_text
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -26,18 +28,24 @@ def analyze():
     if not job_description.strip():
         return "Job description is required."
 
-    # Save uploaded file
     save_path = os.path.join(app.config["UPLOAD_FOLDER"], resume_file.filename)
     resume_file.save(save_path)
 
-    # For now, just pass placeholder data
+    # Extract raw resume text
+    raw_resume_text = extract_text_from_pdf(save_path)
+
+    # Clean both resume and job description
+    cleaned_resume_text = clean_text(raw_resume_text)
+    cleaned_job_description = clean_text(job_description)
+
     result = {
         "resume_filename": resume_file.filename,
-        "job_description": job_description,
         "match_score": 0,
         "matched_skills": [],
         "missing_skills": [],
-        "suggestions": ["Scoring logic will be added from Day 2 onward."]
+        "suggestions": ["Text extracted successfully. Scoring will be added on Day 3."],
+        "resume_preview": cleaned_resume_text[:1000],
+        "job_description_preview": cleaned_job_description[:1000]
     }
 
     return render_template("result.html", result=result)

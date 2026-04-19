@@ -53,3 +53,13 @@ a {
     text-decoration: none;
     color: #0066cc;
 }
+.preview-box {
+    background: #f8f8f8;
+    border: 1px solid #ddd;
+    padding: 15px;
+    margin-top: 10px;
+    white-space: pre-wrap;
+    border-radius: 8px;
+    max-height: 250px;
+    overflow-y: auto;
+}
