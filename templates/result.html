@@ -7,44 +7,119 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <div class="container">
-        <h1>Analysis Result</h1>
+    <div class="page">
+        <div class="container">
+            <div class="top-bar">
+                <h1>Analysis Result</h1>
+                <a href="/" class="secondary-btn">Analyze Another Resume</a>
+            </div>
 
-        <p><strong>Resume File:</strong> {{ result.resume_filename }}</p>
-        <p><strong>Match Score:</strong> {{ result.match_score }}%</p>
+            <div class="meta-info">
+                <p><strong>Resume File:</strong> {{ result.resume_filename }}</p>
+            </div>
 
-        <h2>Matched Skills</h2>
-        <ul>
-            {% for skill in result.matched_skills %}
-                <li>{{ skill }}</li>
-            {% endfor %}
-        </ul>
+            <div class="score-grid">
+                <div class="score-card">
+                    <h3>Match Score</h3>
+                    <div class="score-value">{{ result.match_score }}%</div>
+                </div>
 
-        <h2>Missing Skills</h2>
-        <ul>
-            {% for skill in result.missing_skills %}
-                <li>{{ skill }}</li>
-            {% endfor %}
-        </ul>
+                <div class="score-card">
+                    <h3>Skill Coverage</h3>
+                    <div class="score-value">{{ result.skill_coverage }}%</div>
+                </div>
+            </div>
 
-        <h2>Suggestions</h2>
-        <ul>
-            {% for suggestion in result.suggestions %}
-                <li>{{ suggestion }}</li>
-            {% endfor %}
-        </ul>
+            <div class="section-card">
+                <h2>Matched Skills</h2>
+                {% if result.matched_skills %}
+                    <div class="badge-container">
+                        {% for skill in result.matched_skills %}
+                            <span class="badge success">{{ skill }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p>No matched skills found.</p>
+                {% endif %}
+            </div>
 
-        <h2>Resume Preview</h2>
-        <div class="preview-box">
-            {{ result.resume_preview }}
+            <div class="section-card">
+                <h2>Missing Skills</h2>
+                {% if result.missing_skills %}
+                    <div class="badge-container">
+                        {% for skill in result.missing_skills %}
+                            <span class="badge danger">{{ skill }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p>No missing skills found.</p>
+                {% endif %}
+            </div>
+
+            <div class="section-card">
+                <h2>Strengths Summary</h2>
+                <ul>
+                    {% for item in result.strengths %}
+                        <li>{{ item }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <div class="section-card">
+                <h2>Improvement Suggestions</h2>
+                <ul>
+                    {% for suggestion in result.suggestions %}
+                        <li>{{ suggestion }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <div class="two-column">
+                <div class="section-card">
+                    <h2>Resume Skill Categories</h2>
+                    {% if result.resume_categories %}
+                        {% for category, skills in result.resume_categories.items() %}
+                            <p>
+                                <strong>{{ category.replace("_", " ").title() }}:</strong>
+                                {{ skills | join(", ") }}
+                            </p>
+                        {% endfor %}
+                    {% else %}
+                        <p>No categorized skills detected in resume.</p>
+                    {% endif %}
+                </div>
+
+                <div class="section-card">
+                    <h2>Job Description Skill Categories</h2>
+                    {% if result.jd_categories %}
+                        {% for category, skills in result.jd_categories.items() %}
+                            <p>
+                                <strong>{{ category.replace("_", " ").title() }}:</strong>
+                                {{ skills | join(", ") }}
+                            </p>
+                        {% endfor %}
+                    {% else %}
+                        <p>No categorized skills detected in job description.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="two-column">
+                <div class="section-card">
+                    <h2>Resume Preview</h2>
+                    <div class="preview-box">{{ result.resume_preview }}</div>
+                </div>
+
+                <div class="section-card">
+                    <h2>Job Description Preview</h2>
+                    <div class="preview-box">{{ result.job_description_preview }}</div>
+                </div>
+            </div>
+
+            <div class="download-row">
+                <a href="/download-report" class="primary-btn">Download Report</a>
+            </div>
         </div>
-
-        <h2>Job Description Preview</h2>
-        <div class="preview-box">
-            {{ result.job_description_preview }}
-        </div>
-
-        <a href="/">Go Back</a>
     </div>
 </body>
 </html>

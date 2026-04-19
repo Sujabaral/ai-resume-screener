@@ -7,19 +7,28 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <div class="container">
-        <h1>AI Resume Screener & Job Match Scorer</h1>
-        <p>Upload your resume and paste a job description to analyze the match.</p>
+    <div class="page">
+        <div class="container hero-card">
+            <h1>AI Resume Screener & Job Match Scorer</h1>
+            <p class="subtitle">
+                Upload your resume and paste a job description to analyze match score,
+                skill coverage, missing skills, and tailored improvement suggestions.
+            </p>
 
-        <form action="/analyze" method="POST" enctype="multipart/form-data">
-            <label for="resume">Upload Resume (PDF):</label>
-            <input type="file" name="resume" id="resume" accept=".pdf" required>
+            <form action="/analyze" method="POST" enctype="multipart/form-data" class="main-form">
+                <div class="form-group">
+                    <label for="resume">Upload Resume (PDF)</label>
+                    <input type="file" name="resume" id="resume" accept=".pdf" required>
+                </div>
 
-            <label for="job_description">Paste Job Description:</label>
-            <textarea name="job_description" id="job_description" rows="10" required></textarea>
+                <div class="form-group">
+                    <label for="job_description">Paste Job Description</label>
+                    <textarea name="job_description" id="job_description" rows="12" placeholder="Paste the full job description here..." required></textarea>
+                </div>
 
-            <button type="submit">Analyze Match</button>
-        </form>
+                <button type="submit" class="primary-btn">Analyze Resume</button>
+            </form>
+        </div>
     </div>
 </body>
 </html>
