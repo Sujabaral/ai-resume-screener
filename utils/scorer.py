@@ -1,10 +1,12 @@
-# utils/scorer.py
-
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
+from utils.role_profiles import ROLE_PROFILES
 
 
 def cosine_score(text1: str, text2: str) -> float:
+    if not text1 or not text2:
+        return 0.0
+
     if not text1.strip() or not text2.strip():
         return 0.0
 
@@ -14,27 +16,45 @@ def cosine_score(text1: str, text2: str) -> float:
     return round(score * 100, 2)
 
 
-def skill_match_score(resume_skills: list, jd_skills: list) -> float:
-    if not jd_skills:
+def overlap_score(source_skills: list, target_skills: list) -> float:
+    if not target_skills:
         return 0.0
 
-    resume_set = set(resume_skills)
-    jd_set = set(jd_skills)
+    source_set = set(source_skills)
+    target_set = set(target_skills)
+    matched = source_set.intersection(target_set)
+    return round((len(matched) / len(target_set)) * 100, 2)
 
-    matched = resume_set.intersection(jd_set)
-    return round((len(matched) / len(jd_set)) * 100, 2)
 
+def calculate_final_score(resume_data: dict, jd_data: dict, selected_role: str = None) -> dict:
+    role = selected_role or jd_data.get("inferred_role", "backend")
+    profile = ROLE_PROFILES.get(role, ROLE_PROFILES["backend"])
+    weights = profile["weights"]
 
-def calculate_final_score(resume_data: dict, jd_data: dict) -> dict:
     overall_similarity = cosine_score(
         resume_data.get("cleaned_text", ""),
         jd_data.get("cleaned_text", "")
     )
 
-    skill_score = skill_match_score(
+    all_skill_score = overlap_score(
         resume_data.get("skills", []),
         jd_data.get("skills", [])
     )
+
+    required_skill_score = overlap_score(
+        resume_data.get("skills", []),
+        jd_data.get("required_skills", [])
+    )
+
+    preferred_skill_score = overlap_score(
+        resume_data.get("skills", []),
+        jd_data.get("preferred_skills", [])
+    )
+
+    weighted_skill_score = round(
+        (0.7 * required_skill_score) + (0.3 * preferred_skill_score),
+        2
+    ) if jd_data.get("required_skills") or jd_data.get("preferred_skills") else all_skill_score
 
     experience_score = cosine_score(
         resume_data.get("sections", {}).get("experience", ""),
@@ -47,16 +67,20 @@ def calculate_final_score(resume_data: dict, jd_data: dict) -> dict:
     )
 
     final_score = round(
-        (0.50 * overall_similarity) +
-        (0.30 * skill_score) +
-        (0.10 * experience_score) +
-        (0.10 * project_score),
+        (weights["overall"] * overall_similarity) +
+        (weights["skills"] * weighted_skill_score) +
+        (weights["experience"] * experience_score) +
+        (weights["projects"] * project_score),
         2
     )
 
     return {
+        "role_used": role,
         "overall_similarity": overall_similarity,
-        "skill_score": skill_score,
+        "all_skill_score": all_skill_score,
+        "required_skill_score": required_skill_score,
+        "preferred_skill_score": preferred_skill_score,
+        "weighted_skill_score": weighted_skill_score,
         "experience_score": experience_score,
         "project_score": project_score,
         "final_score": final_score

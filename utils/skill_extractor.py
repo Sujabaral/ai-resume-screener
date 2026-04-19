@@ -2,7 +2,7 @@ import re
 
 SKILL_CATEGORIES = {
     "programming": [
-        "python", "java", "c", "c++", "c#", "javascript"
+        "python", "java", "c++", "c#", "javascript"
     ],
     "web_development": [
         "html", "css", "django", "flask", "fastapi", "react", "node.js"
@@ -24,7 +24,6 @@ SKILL_CATEGORIES = {
     ]
 }
 
-# Aliases / synonyms -> standard skill form
 SKILL_ALIASES = {
     "js": "javascript",
     "py": "python",
@@ -34,7 +33,6 @@ SKILL_ALIASES = {
     "machine-learning": "machine learning",
     "deep-learning": "deep learning",
     "natural language processing": "nlp",
-    "nlp": "nlp",
     "problem-solving": "problem solving",
     "c plus plus": "c++",
     "cplusplus": "c++",
@@ -44,28 +42,21 @@ SKILL_ALIASES = {
 
 
 def normalize_text(text: str) -> str:
-    """
-    Normalize text for better skill matching.
-    """
     if not text:
         return ""
 
     text = text.lower()
-
-    # Normalize separators/hyphens
     text = text.replace("/", " ")
     text = text.replace(",", " ")
     text = text.replace("•", " ")
     text = text.replace("\n", " ")
 
-    # Keep +, #, . because skills like c++, c#, node.js matter
+    # keep +, #, . and -
     text = re.sub(r"[^a-z0-9+#.\s-]", " ", text)
-
-    # Normalize multiple spaces
     text = re.sub(r"\s+", " ", text).strip()
 
-    # Replace aliases with standard forms
-    for alias, standard in SKILL_ALIASES.items():
+    # replace longer aliases first
+    for alias, standard in sorted(SKILL_ALIASES.items(), key=lambda x: len(x[0]), reverse=True):
         pattern = rf"(?<!\w){re.escape(alias)}(?!\w)"
         text = re.sub(pattern, standard, text)
 
@@ -73,25 +64,11 @@ def normalize_text(text: str) -> str:
 
 
 def build_skill_pattern(skill: str) -> str:
-    """
-    Build safe regex pattern for a skill.
-    """
     escaped_skill = re.escape(skill)
-
-    # Use custom handling for skills containing special chars like c++, c#, node.js
     return rf"(?<!\w){escaped_skill}(?!\w)"
 
 
 def extract_skills(text: str) -> list:
-    """
-    Extract all skills found in text from predefined categories.
-
-    Args:
-        text (str): Cleaned resume or job description text
-
-    Returns:
-        list: Sorted list of unique detected skills
-    """
     if not text:
         return []
 
@@ -108,15 +85,6 @@ def extract_skills(text: str) -> list:
 
 
 def extract_skills_by_category(text: str) -> dict:
-    """
-    Extract skills grouped by category.
-
-    Args:
-        text (str): Cleaned resume or job description text
-
-    Returns:
-        dict: category -> list of detected skills
-    """
     if not text:
         return {}
 

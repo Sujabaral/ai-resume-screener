@@ -3,31 +3,67 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Resume Screener</title>
+    <title>AI Resume Screener & Job Match Scorer</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
     <div class="page">
-        <div class="container hero-card">
-            <h1>AI Resume Screener & Job Match Scorer</h1>
-            <p class="subtitle">
-                Upload your resume and paste a job description to analyze match score,
-                skill coverage, missing skills, and tailored improvement suggestions.
-            </p>
+        <div class="container">
+            <div class="hero-card">
+                <h1>AI Resume Screener & Job Match Scorer</h1>
+                <p class="subtitle">
+                    Analyze how well a resume matches a job description using structured parsing,
+                    skill extraction, weighted scoring, and actionable suggestions.
+                </p>
+                <p class="subtext">
+                    Version 1.5 includes improved PDF parsing, section detection, skill normalization,
+                    category-wise matching, and missing-skill feedback.
+                </p>
 
-            <form action="/analyze" method="POST" enctype="multipart/form-data" class="main-form">
-                <div class="form-group">
-                    <label for="resume">Upload Resume (PDF)</label>
-                    <input type="file" name="resume" id="resume" accept=".pdf" required>
+                <form action="/analyze" method="POST" enctype="multipart/form-data" class="main-form">
+                    <div class="form-group">
+                        <label for="resume">Upload Resume (PDF)</label>
+                        <input type="file" name="resumes" id="resumes" accept=".pdf" multiple required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="job_description">Paste Job Description</label>
+                        <textarea
+                            name="job_description"
+                            id="job_description"
+                            rows="12"
+                            placeholder="Paste the full job description here..."
+                            required
+                        ></textarea>
+                    </div>
+
+                    <button type="submit" class="primary-btn">Analyze Resume</button>
+                </form>
+            </div>
+
+            <div class="two-column">
+                <div class="section-card">
+                    <h2>What this tool checks</h2>
+                    <ul>
+                        <li>Overall resume-to-job similarity</li>
+                        <li>Skill coverage and missing skills</li>
+                        <li>Experience and project relevance</li>
+                        <li>Resume skill categories</li>
+                        <li>Improvement suggestions</li>
+                    </ul>
                 </div>
 
-                <div class="form-group">
-                    <label for="job_description">Paste Job Description</label>
-                    <textarea name="job_description" id="job_description" rows="12" placeholder="Paste the full job description here..." required></textarea>
+                <div class="section-card">
+                    <h2>Version 1.5 highlights</h2>
+                    <ul>
+                        <li>PyMuPDF with PDF fallback parsing</li>
+                        <li>Section detection for resume structure</li>
+                        <li>Skill alias normalization</li>
+                        <li>Weighted scoring system</li>
+                        <li>Downloadable analysis report</li>
+                    </ul>
                 </div>
-
-                <button type="submit" class="primary-btn">Analyze Resume</button>
-            </form>
+            </div>
         </div>
     </div>
 </body>

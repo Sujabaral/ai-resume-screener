@@ -1,14 +1,12 @@
-# utils/resume_parser.py
-
 import re
 
 SECTION_PATTERNS = {
-    "skills": r"\b(skills|technical skills|core skills|competencies|technologies)\b",
-    "experience": r"\b(experience|work experience|employment|professional experience|internship)\b",
-    "education": r"\b(education|academic background|qualification|academic qualifications)\b",
-    "projects": r"\b(projects|personal projects|academic projects)\b",
-    "certifications": r"\b(certifications|licenses|courses|training)\b",
-    "summary": r"\b(summary|profile|professional summary|objective|about me)\b",
+    "summary": r"(summary|profile|professional summary|objective|about me)",
+    "skills": r"(skills|technical skills|core skills|competencies|technologies)",
+    "experience": r"(experience|work experience|employment|professional experience|internship)",
+    "education": r"(education|academic background|qualifications)",
+    "projects": r"(projects|personal projects|academic projects)",
+    "certifications": r"(certifications|training|courses|licenses)"
 }
 
 
@@ -19,23 +17,26 @@ def split_into_sections(text: str) -> dict:
     sections[current_section] = []
 
     for line in lines:
-        matched = False
         lower_line = line.lower()
+        matched_section = None
 
-        for section_name, pattern in SECTION_PATTERNS.items():
+        for section, pattern in SECTION_PATTERNS.items():
             if re.fullmatch(pattern, lower_line):
-                current_section = section_name
-                if current_section not in sections:
-                    sections[current_section] = []
-                matched = True
+                matched_section = section
                 break
 
-        if not matched:
+        if matched_section:
+            current_section = matched_section
+            sections.setdefault(current_section, [])
+        else:
             sections.setdefault(current_section, []).append(line)
 
-    return {k: "\n".join(v).strip() for k, v in sections.items() if v}
+    return {
+        key: "\n".join(value).strip()
+        for key, value in sections.items()
+        if value
+    }
 
-import re
 
 def extract_contact_info(text: str) -> dict:
     email = re.findall(r'[\w\.-]+@[\w\.-]+\.\w+', text)

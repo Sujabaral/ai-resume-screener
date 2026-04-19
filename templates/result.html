@@ -3,30 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analysis Result</title>
+    <title>Resume Analysis Result</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
     <div class="page">
         <div class="container">
             <div class="top-bar">
-                <h1>Analysis Result</h1>
+                <div>
+                    <h1>Resume Analysis Result</h1>
+                    <p class="subtext">AI Resume Screener & Job Match Scorer — Version 1.5</p>
+                </div>
                 <a href="/" class="secondary-btn">Analyze Another Resume</a>
             </div>
 
             <div class="meta-info">
                 <p><strong>Resume File:</strong> {{ result.resume_filename }}</p>
+                <p><strong>Match Label:</strong> {{ result.match_label }}</p>
             </div>
 
             <div class="score-grid">
                 <div class="score-card">
-                    <h3>Match Score</h3>
+                    <h3>Final Match Score</h3>
                     <div class="score-value">{{ result.match_score }}%</div>
                 </div>
 
                 <div class="score-card">
                     <h3>Skill Coverage</h3>
                     <div class="score-value">{{ result.skill_coverage }}%</div>
+                </div>
+
+                <div class="score-card">
+                    <h3>Overall Similarity</h3>
+                    <div class="score-value">{{ result.overall_similarity }}%</div>
+                </div>
+
+                <div class="score-card">
+                    <h3>Experience Score</h3>
+                    <div class="score-value">{{ result.experience_score }}%</div>
+                </div>
+
+                <div class="score-card">
+                    <h3>Project Score</h3>
+                    <div class="score-value">{{ result.project_score }}%</div>
                 </div>
             </div>
 
@@ -56,22 +75,32 @@
                 {% endif %}
             </div>
 
-            <div class="section-card">
-                <h2>Strengths Summary</h2>
-                <ul>
-                    {% for item in result.strengths %}
-                        <li>{{ item }}</li>
-                    {% endfor %}
-                </ul>
-            </div>
+            <div class="two-column">
+                <div class="section-card">
+                    <h2>Strengths</h2>
+                    {% if result.strengths %}
+                        <ul>
+                            {% for item in result.strengths %}
+                                <li>{{ item }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p>No strengths summary available.</p>
+                    {% endif %}
+                </div>
 
-            <div class="section-card">
-                <h2>Improvement Suggestions</h2>
-                <ul>
-                    {% for suggestion in result.suggestions %}
-                        <li>{{ suggestion }}</li>
-                    {% endfor %}
-                </ul>
+                <div class="section-card">
+                    <h2>Suggestions</h2>
+                    {% if result.suggestions %}
+                        <ul>
+                            {% for suggestion in result.suggestions %}
+                                <li>{{ suggestion }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p>No suggestions available.</p>
+                    {% endif %}
+                </div>
             </div>
 
             <div class="two-column">
@@ -79,13 +108,17 @@
                     <h2>Resume Skill Categories</h2>
                     {% if result.resume_categories %}
                         {% for category, skills in result.resume_categories.items() %}
-                            <p>
-                                <strong>{{ category.replace("_", " ").title() }}:</strong>
-                                {{ skills | join(", ") }}
-                            </p>
+                            <div class="category-block">
+                                <p class="category-title">{{ category.replace("_", " ").title() }}</p>
+                                <div class="badge-container">
+                                    {% for skill in skills %}
+                                        <span class="badge neutral">{{ skill }}</span>
+                                    {% endfor %}
+                                </div>
+                            </div>
                         {% endfor %}
                     {% else %}
-                        <p>No categorized skills detected in resume.</p>
+                        <p>No categorized skills detected in the resume.</p>
                     {% endif %}
                 </div>
 
@@ -93,13 +126,49 @@
                     <h2>Job Description Skill Categories</h2>
                     {% if result.jd_categories %}
                         {% for category, skills in result.jd_categories.items() %}
-                            <p>
-                                <strong>{{ category.replace("_", " ").title() }}:</strong>
-                                {{ skills | join(", ") }}
-                            </p>
+                            <div class="category-block">
+                                <p class="category-title">{{ category.replace("_", " ").title() }}</p>
+                                <div class="badge-container">
+                                    {% for skill in skills %}
+                                        <span class="badge neutral">{{ skill }}</span>
+                                    {% endfor %}
+                                </div>
+                            </div>
                         {% endfor %}
                     {% else %}
-                        <p>No categorized skills detected in job description.</p>
+                        <p>No categorized skills detected in the job description.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="two-column">
+                <div class="section-card">
+                    <h2>Extracted Contact Information</h2>
+                    {% if result.contact_info %}
+                        <p><strong>Email:</strong> {{ result.contact_info.email or "Not detected" }}</p>
+                        <p><strong>Phone:</strong> {{ result.contact_info.phone or "Not detected" }}</p>
+                        <p><strong>LinkedIn:</strong> {{ result.contact_info.linkedin or "Not detected" }}</p>
+                        <p><strong>GitHub:</strong> {{ result.contact_info.github or "Not detected" }}</p>
+                    {% else %}
+                        <p>No contact information detected.</p>
+                    {% endif %}
+                </div>
+
+                <div class="section-card">
+                    <h2>Detected Resume Sections</h2>
+                    {% if result.resume_sections %}
+                        <ul>
+                            {% for section_name, section_text in result.resume_sections.items() %}
+                                <li>
+                                    <strong>{{ section_name.replace("_", " ").title() }}</strong>
+                                    {% if section_text %}
+                                        — detected
+                                    {% endif %}
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p>No resume sections detected.</p>
                     {% endif %}
                 </div>
             </div>
