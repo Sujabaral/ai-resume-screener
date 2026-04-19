@@ -187,85 +187,95 @@ RESPONSIBILITY_VERBS = [
 ]
 
 DEFAULT_SCORING_WEIGHTS = {
-    "semantic_score": 0.30,
+    "semantic_score": 0.25,
     "skill_match_score": 0.25,
-    "responsibility_score": 0.20,
-    "experience_score": 0.15,
+    "responsibility_score": 0.18,
+    "experience_score": 0.12,
     "education_score": 0.05,
-    "keyword_alignment_score": 0.05
+    "keyword_alignment_score": 0.05,
+    "soft_skill_score": 0.10
 }
 
 DOMAIN_WEIGHT_OVERRIDES = {
     "technology": {
-        "semantic_score": 0.28,
+        "semantic_score": 0.25,
         "skill_match_score": 0.30,
-        "responsibility_score": 0.18,
-        "experience_score": 0.14,
+        "responsibility_score": 0.17,
+        "experience_score": 0.13,
         "education_score": 0.05,
-        "keyword_alignment_score": 0.05
+        "keyword_alignment_score": 0.05,
+        "soft_skill_score": 0.05
     },
     "sales": {
-        "semantic_score": 0.28,
+        "semantic_score": 0.25,
         "skill_match_score": 0.22,
         "responsibility_score": 0.22,
         "experience_score": 0.16,
-        "education_score": 0.04,
-        "keyword_alignment_score": 0.08
+        "education_score": 0.05,
+        "keyword_alignment_score": 0.05,
+        "soft_skill_score": 0.05
     },
     "marketing": {
-        "semantic_score": 0.30,
+        "semantic_score": 0.25,
         "skill_match_score": 0.22,
         "responsibility_score": 0.20,
-        "experience_score": 0.14,
-        "education_score": 0.04,
-        "keyword_alignment_score": 0.10
+        "experience_score": 0.15,
+        "education_score": 0.05,
+        "keyword_alignment_score": 0.08,
+        "soft_skill_score": 0.05
     },
     "finance": {
-        "semantic_score": 0.27,
+        "semantic_score": 0.25,
         "skill_match_score": 0.28,
         "responsibility_score": 0.20,
-        "experience_score": 0.16,
-        "education_score": 0.05,
-        "keyword_alignment_score": 0.04
+        "experience_score": 0.15,
+        "education_score": 0.07,
+        "keyword_alignment_score": 0.03,
+        "soft_skill_score": 0.02
     },
     "hr": {
-        "semantic_score": 0.29,
+        "semantic_score": 0.24,
         "skill_match_score": 0.22,
         "responsibility_score": 0.22,
-        "experience_score": 0.16,
-        "education_score": 0.05,
-        "keyword_alignment_score": 0.06
+        "experience_score": 0.15,
+        "education_score": 0.07,
+        "keyword_alignment_score": 0.05,
+        "soft_skill_score": 0.05
     },
     "education": {
-        "semantic_score": 0.29,
+        "semantic_score": 0.25,
         "skill_match_score": 0.22,
         "responsibility_score": 0.22,
-        "experience_score": 0.16,
-        "education_score": 0.06,
-        "keyword_alignment_score": 0.05
+        "experience_score": 0.15,
+        "education_score": 0.10,
+        "keyword_alignment_score": 0.03,
+        "soft_skill_score": 0.03
     },
     "healthcare": {
-        "semantic_score": 0.28,
+        "semantic_score": 0.25,
         "skill_match_score": 0.24,
         "responsibility_score": 0.22,
         "experience_score": 0.16,
-        "education_score": 0.06,
-        "keyword_alignment_score": 0.04
+        "education_score": 0.08,
+        "keyword_alignment_score": 0.03,
+        "soft_skill_score": 0.02
     },
     "operations": {
-        "semantic_score": 0.28,
+        "semantic_score": 0.25,
         "skill_match_score": 0.24,
         "responsibility_score": 0.22,
-        "experience_score": 0.17,
-        "education_score": 0.05,
-        "keyword_alignment_score": 0.04
+        "experience_score": 0.16,
+        "education_score": 0.07,
+        "keyword_alignment_score": 0.03,
+        "soft_skill_score": 0.03
     },
     "customer_support": {
-        "semantic_score": 0.29,
+        "semantic_score": 0.25,
         "skill_match_score": 0.22,
         "responsibility_score": 0.23,
         "experience_score": 0.15,
-        "education_score": 0.04,
-        "keyword_alignment_score": 0.07
+        "education_score": 0.05,
+        "keyword_alignment_score": 0.05,
+        "soft_skill_score": 0.05
     }
 }
