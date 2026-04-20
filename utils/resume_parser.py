@@ -1,244 +1,226 @@
 # utils/resume_parser.py
 
-"""
-Resume parsing utilities
-
-Purpose:
-- structure raw resume text into useful sections
-- extract skills from the resume
-- detect education clues
-- detect experience/seniority clues
-- prepare data for scoring
-"""
-
 import re
 
 from utils.constants import EDUCATION_KEYWORDS, SECTION_HEADERS, SENIORITY_KEYWORDS
-from utils.skill_extractor import extract_skills
 from utils.text_preprocessor import clean_section_text, extract_lines, preprocess_text
 
 
+# ----------------------------
+# NAME EXTRACTION
+# ----------------------------
+
 def extract_candidate_name(raw_text):
-    """
-    Best-effort candidate name extraction.
-    Uses the first meaningful line from the raw resume text.
-    """
     lines = extract_lines(raw_text)
 
-    if not lines:
-        return "Unknown Candidate"
-
     for line in lines[:5]:
-        stripped = line.strip()
+        line = line.strip()
 
-        # skip lines that are probably headings or contact lines
-        if not stripped:
+        if not line:
             continue
-
-        lower_line = stripped.lower()
-
-        if "@" in stripped:
+        if "@" in line:
             continue
-        if any(char.isdigit() for char in stripped):
+        if any(char.isdigit() for char in line):
             continue
-        if len(stripped.split()) > 5:
-            continue
-        if lower_line in {
-            "resume", "curriculum vitae", "cv", "profile", "summary", "objective"
-        }:
+        if len(line.split()) > 5:
             continue
 
-        return stripped.title()
+        return line.title()
 
     return "Unknown Candidate"
 
 
+# ----------------------------
+# SECTION DETECTION
+# ----------------------------
+
 def detect_sections(raw_text):
-    """
-    Detect resume sections using common section headers.
-    Returns a dict of section_name -> section_text.
-    """
     lines = extract_lines(raw_text)
+
     sections = {
         "summary": "",
         "skills": "",
         "experience": "",
         "education": "",
-        "certifications": "",
         "projects": "",
+        "certifications": "",
         "other": ""
     }
 
-    current_section = "other"
+    current = "other"
 
     for line in lines:
         line_clean = line.strip()
         line_lower = line_clean.lower()
 
-        detected_section = None
+        found = False
 
-        for section_name, header_variants in SECTION_HEADERS.items():
-            if line_lower in header_variants:
-                detected_section = section_name
+        for section_name, variants in SECTION_HEADERS.items():
+            if line_lower in variants:
+                current = section_name
+                found = True
                 break
 
-        if detected_section:
-            current_section = detected_section
-            continue
+        if not found:
+            sections[current] += line_clean + "\n"
 
-        sections[current_section] += line_clean + "\n"
-
-    for key in sections:
-        sections[key] = clean_section_text(sections[key])
+    for k in sections:
+        sections[k] = clean_section_text(sections[k])
 
     return sections
 
 
-def extract_education_level(text):
-    """
-    Detect highest education level mentioned in the resume.
-    """
-    text = preprocess_text(text)
+# ----------------------------
+# SKILL EXTRACTION (IMPROVED)
+# ----------------------------
 
-    detected_levels = []
+def extract_skills_from_text(text):
+    text = text.lower()
 
-    for level, keywords in EDUCATION_KEYWORDS.items():
-        for keyword in keywords:
-            if keyword in text:
-                detected_levels.append(level)
-                break
-
-    priority = ["high_school", "diploma", "bachelor", "master", "phd"]
-
-    highest = None
-    highest_index = -1
-
-    for level in detected_levels:
-        if level in priority:
-            idx = priority.index(level)
-            if idx > highest_index:
-                highest_index = idx
-                highest = level
-
-    return highest if highest else "unknown"
-
-
-def extract_seniority_level(text):
-    """
-    Detect likely seniority level from resume text.
-    """
-    text = preprocess_text(text)
-
-    seniority_scores = {
-        "entry_level": 0,
-        "mid_level": 0,
-        "senior_level": 0
-    }
-
-    for level, keywords in SENIORITY_KEYWORDS.items():
-        for keyword in keywords:
-            if keyword in text:
-                seniority_scores[level] += 1
-
-    best_level = max(seniority_scores, key=seniority_scores.get)
-
-    if seniority_scores[best_level] == 0:
-        return "unknown"
-
-    return best_level
-
-
-def estimate_years_of_experience(raw_text):
-    """
-    Very rough heuristic to estimate years of experience.
-    Looks for patterns like:
-    - 2 years
-    - 3+ years
-    - 1 year
-    """
-    text = preprocess_text(raw_text)
-
-    patterns = [
-        r"(\d+)\+?\s+years",
-        r"(\d+)\+?\s+year",
-        r"(\d+)\+?\s+yrs",
-        r"(\d+)\+?\s+yr"
+    base_skills = [
+        "python", "java", "c++", "sql", "excel",
+        "machine learning", "data analysis",
+        "communication", "teamwork", "leadership",
+        "problem solving", "creativity",
+        "content creation", "copywriting",
+        "social media", "seo", "branding",
+        "digital marketing", "research",
+        "canva", "photoshop", "figma"
     ]
 
-    found_values = []
+    found = []
 
-    for pattern in patterns:
-        matches = re.findall(pattern, text)
-        for match in matches:
-            try:
-                found_values.append(int(match))
-            except ValueError:
-                continue
+    for skill in base_skills:
+        if skill in text:
+            found.append(skill)
 
-    if not found_values:
-        return 0
+    return list(set(found))
 
-    return max(found_values)
 
+# ----------------------------
+# SOFT SKILLS (NEW)
+# ----------------------------
+
+def extract_soft_skills(text):
+    soft_keywords = [
+        "communication", "teamwork", "collaboration",
+        "leadership", "adaptability", "creativity",
+        "time management", "problem solving"
+    ]
+
+    text = text.lower()
+
+    return [s for s in soft_keywords if s in text]
+
+
+# ----------------------------
+# EXPERIENCE EXTRACTION
+# ----------------------------
+
+def extract_experience_items(sections):
+    experience_text = sections.get("experience", "")
+    projects_text = sections.get("projects", "")
+
+    combined = experience_text + "\n" + projects_text
+
+    lines = combined.split("\n")
+
+    items = []
+
+    for line in lines:
+        line = line.strip()
+
+        if len(line.split()) > 4:
+            items.append(line)
+
+    return items[:25]
+
+
+# ----------------------------
+# EDUCATION LEVEL
+# ----------------------------
+
+def extract_education_level(text):
+    text = preprocess_text(text)
+
+    for level, keywords in EDUCATION_KEYWORDS.items():
+        if any(k in text for k in keywords):
+            return level
+
+    return "unknown"
+
+
+# ----------------------------
+# SENIORITY
+# ----------------------------
+
+def extract_seniority_level(text):
+    text = preprocess_text(text)
+
+    for level, keywords in SENIORITY_KEYWORDS.items():
+        if any(k in text for k in keywords):
+            return level
+
+    return "entry_level"
+
+
+# ----------------------------
+# EXPERIENCE YEARS
+# ----------------------------
+
+def estimate_years_of_experience(text):
+    text = preprocess_text(text)
+
+    matches = re.findall(r"(\d+)\+?\s+years", text)
+
+    if matches:
+        return max(int(m) for m in matches)
+
+    return 0
+
+
+# ----------------------------
+# MAIN PARSER
+# ----------------------------
 
 def parse_resume(raw_text):
-    """
-    Main resume parser.
 
-    Returns structured resume data for scoring.
-    """
-    if not raw_text or not raw_text.strip():
-        return {
-            "name": "Unknown Candidate",
-            "full_text": "",
-            "clean_text": "",
-            "sections": {},
-            "skills": {},
-            "experience_text": "",
-            "education_text": "",
-            "projects_text": "",
-            "summary_text": "",
-            "certifications_text": "",
-            "education_level": "unknown",
-            "seniority_level": "unknown",
-            "estimated_years_experience": 0
-        }
+    if not raw_text.strip():
+        return {}
 
     clean_text = preprocess_text(raw_text)
     sections = detect_sections(raw_text)
 
-    # combine important areas for better extraction
-    skills_source_text = "\n".join([
+    # Combine important text
+    skill_text = " ".join([
         sections.get("skills", ""),
         sections.get("summary", ""),
         sections.get("experience", ""),
         sections.get("projects", "")
-    ]).strip()
+    ])
 
-    experience_text = "\n".join([
-        sections.get("experience", ""),
-        sections.get("projects", "")
-    ]).strip()
+    experience_items = extract_experience_items(sections)
 
-    education_text = "\n".join([
-        sections.get("education", ""),
-        sections.get("certifications", "")
-    ]).strip()
+    skills = extract_skills_from_text(skill_text)
+    soft_skills = extract_soft_skills(skill_text)
 
-    parsed = {
+    return {
         "name": extract_candidate_name(raw_text),
-        "full_text": raw_text,
-        "clean_text": clean_text,
-        "sections": sections,
-        "skills": extract_skills(skills_source_text if skills_source_text else raw_text),
-        "experience_text": preprocess_text(experience_text if experience_text else raw_text),
-        "education_text": preprocess_text(education_text),
-        "projects_text": preprocess_text(sections.get("projects", "")),
-        "summary_text": preprocess_text(sections.get("summary", "")),
-        "certifications_text": preprocess_text(sections.get("certifications", "")),
-        "education_level": extract_education_level(education_text if education_text else raw_text),
-        "seniority_level": extract_seniority_level(raw_text),
-        "estimated_years_experience": estimate_years_of_experience(raw_text)
-    }
 
-    return parsed
+        "raw_text": raw_text,
+        "clean_text": clean_text,
+
+        "sections": sections,
+
+        "skills": skills,
+        "soft_skills": soft_skills,
+
+        "experience": experience_items,
+        "projects": sections.get("projects", "").split("\n"),
+
+        "education": sections.get("education", ""),
+
+        "education_level": extract_education_level(raw_text),
+        "seniority_level": extract_seniority_level(raw_text),
+        "estimated_years_experience": estimate_years_of_experience(raw_text),
+    }

@@ -1,185 +1,151 @@
 # utils/jd_parser.py
 
-"""
-Job description parsing utilities (Version 2.0)
-
-Purpose:
-- structured JD understanding
-- domain detection
-- skill extraction (required + preferred)
-- responsibility extraction (stronger logic)
-- education & experience detection
-- seniority detection
-"""
-
 import re
 
 from utils.constants import EDUCATION_KEYWORDS, RESPONSIBILITY_VERBS, SENIORITY_KEYWORDS
-from utils.domain_classifier import detect_job_domain, get_domain_confidence
-from utils.skill_extractor import extract_required_skills_from_jd
+from utils.domain_classifier import get_domain_confidence
 from utils.text_preprocessor import preprocess_text, split_sentences
 
 
 # ----------------------------
-# RESPONSIBILITY EXTRACTION
+# SMART SKILL EXTRACTION (NEW CORE FIX)
+# ----------------------------
+
+def extract_skills_from_sentences(sentences):
+    """
+    Extract skills dynamically from sentences instead of fixed keyword lists.
+    Works for marketing, HR, content, etc.
+    """
+    skills = set()
+
+    patterns = [
+        r"experience in ([a-zA-Z\s,]+)",
+        r"knowledge of ([a-zA-Z\s,]+)",
+        r"proficiency in ([a-zA-Z\s,]+)",
+        r"skills in ([a-zA-Z\s,]+)",
+        r"responsible for ([a-zA-Z\s,]+)",
+        r"including ([a-zA-Z\s,]+)",
+    ]
+
+    for sentence in sentences:
+        s = sentence.lower()
+
+        for pattern in patterns:
+            matches = re.findall(pattern, s)
+            for match in matches:
+                parts = re.split(r",|and", match)
+                for p in parts:
+                    skill = p.strip()
+                    if 2 < len(skill) < 40:
+                        skills.add(skill)
+
+        # direct keyword fallback
+        keywords = [
+            "content creation", "copywriting", "editing",
+            "social media", "seo", "branding",
+            "digital marketing", "communication",
+            "research", "teamwork", "creativity",
+            "photoshop", "canva"
+        ]
+
+        for kw in keywords:
+            if kw in s:
+                skills.add(kw)
+
+    return list(skills)
+
+
+# ----------------------------
+# RESPONSIBILITY EXTRACTION (IMPROVED)
 # ----------------------------
 
 def extract_responsibilities(jd_text):
-    """
-    Extract likely responsibility sentences.
-
-    Improved logic:
-    - detects action verbs
-    - prioritizes longer sentences
-    - removes noise
-    """
     sentences = split_sentences(jd_text)
     responsibilities = []
 
     for sentence in sentences:
-        sentence_clean = sentence.strip().lower()
+        s = sentence.lower().strip()
 
-        if not sentence_clean or len(sentence_clean.split()) < 5:
+        if len(s.split()) < 5:
             continue
 
-        # Must contain responsibility verb
-        if any(verb in sentence_clean for verb in RESPONSIBILITY_VERBS):
+        if any(verb in s for verb in RESPONSIBILITY_VERBS):
             responsibilities.append(sentence.strip())
 
-    # Keep top meaningful ones (avoid overload)
-    responsibilities = sorted(list(set(responsibilities)))
-
-    return responsibilities[:25]
+    return sorted(list(set(responsibilities)))[:20]
 
 
 # ----------------------------
-# EDUCATION EXTRACTION
+# EDUCATION
 # ----------------------------
 
 def extract_education_requirement(jd_text):
     text = preprocess_text(jd_text)
 
-    detected_levels = []
-
     for level, keywords in EDUCATION_KEYWORDS.items():
-        if any(keyword in text for keyword in keywords):
-            detected_levels.append(level)
-
-    priority = ["high_school", "diploma", "bachelor", "master", "phd"]
-
-    for level in reversed(priority):
-        if level in detected_levels:
+        if any(k in text for k in keywords):
             return level
 
     return "unknown"
 
 
 # ----------------------------
-# EXPERIENCE EXTRACTION
+# EXPERIENCE
 # ----------------------------
 
 def extract_experience_requirement(jd_text):
     text = preprocess_text(jd_text)
 
-    patterns = [
-        r"(\d+)\+?\s+years",
-        r"minimum\s+(\d+)\s+years",
-        r"at least\s+(\d+)\s+years",
-        r"(\d+)\s+to\s+\d+\s+years",
-        r"(\d+)-\d+\s+years"
-    ]
-
-    values = []
-
-    for pattern in patterns:
-        matches = re.findall(pattern, text)
-        for match in matches:
-            try:
-                values.append(int(match))
-            except:
-                continue
-
-    if not values:
-        return 0
-
-    return min(values)
+    matches = re.findall(r"(\d+)\+?\s+years", text)
+    return int(matches[0]) if matches else 0
 
 
 # ----------------------------
-# SENIORITY DETECTION
+# SENIORITY
 # ----------------------------
 
 def extract_seniority_from_jd(jd_text):
     text = preprocess_text(jd_text)
 
-    scores = {
-        "entry_level": 0,
-        "mid_level": 0,
-        "senior_level": 0
-    }
-
     for level, keywords in SENIORITY_KEYWORDS.items():
-        scores[level] = sum(1 for kw in keywords if kw in text)
+        if any(k in text for k in keywords):
+            return level
 
-    best = max(scores, key=scores.get)
+    return "entry_level"  # default for internships
 
-    return best if scores[best] > 0 else "unknown"
+
+# ----------------------------
+# SOFT SKILLS (NEW)
+# ----------------------------
+
+def extract_soft_skills(jd_text):
+    soft_keywords = [
+        "communication", "teamwork", "collaboration",
+        "creativity", "adaptability", "problem solving",
+        "time management"
+    ]
+
+    text = preprocess_text(jd_text)
+
+    return [s for s in soft_keywords if s in text]
 
 
 # ----------------------------
 # PREFERRED SKILLS
 # ----------------------------
 
-def extract_preferred_skills(jd_text, required_skills):
-    """
-    Improved preferred skill detection:
-    - detects marker sentences
-    - extracts skills from them
-    """
-    text = preprocess_text(jd_text)
-    sentences = split_sentences(text)
+def extract_preferred_skills(jd_text):
+    markers = ["preferred", "plus", "nice to have"]
 
-    markers = [
-        "preferred", "nice to have", "plus", "good to have",
-        "added advantage", "bonus"
-    ]
+    sentences = split_sentences(jd_text)
 
-    preferred_sentences = [
-        s for s in sentences if any(m in s for m in markers)
-    ]
+    preferred = []
 
-    preferred_text = " ".join(preferred_sentences)
+    for s in sentences:
+        if any(m in s.lower() for m in markers):
+            preferred.extend(extract_skills_from_sentences([s]))
 
-    extracted = extract_required_skills_from_jd(preferred_text)
-
-    return sorted(list(set([s for s in extracted if s not in required_skills])))
-
-
-# ----------------------------
-# JD QUALITY CHECK (NEW)
-# ----------------------------
-
-def get_jd_quality_score(jd_data):
-    """
-    Rough estimate of how detailed the JD is.
-    Helps debugging.
-    """
-    score = 0
-
-    if jd_data["required_skills"]:
-        score += 25
-    if jd_data["responsibilities"]:
-        score += 25
-    if jd_data["experience_required"] > 0:
-        score += 15
-    if jd_data["education_requirement"] != "unknown":
-        score += 10
-    if jd_data["preferred_skills"]:
-        score += 10
-    if jd_data["seniority_level"] != "unknown":
-        score += 15
-
-    return min(score, 100)
+    return list(set(preferred))
 
 
 # ----------------------------
@@ -187,47 +153,34 @@ def get_jd_quality_score(jd_data):
 # ----------------------------
 
 def parse_job_description(jd_text):
-    """
-    Main JD parser (Version 2.0)
-    """
 
-    if not jd_text or not jd_text.strip():
-        return {
-            "full_text": "",
-            "clean_text": "",
-            "domain": "general",
-            "domain_confidence": 0.0,
-            "required_skills": [],
-            "preferred_skills": [],
-            "responsibilities": [],
-            "education_requirement": "unknown",
-            "experience_required": 0,
-            "seniority_level": "unknown",
-            "jd_quality": 0
-        }
+    if not jd_text.strip():
+        return {}
 
     clean_text = preprocess_text(jd_text)
+    sentences = split_sentences(jd_text)
 
     domain_info = get_domain_confidence(clean_text)
-    domain = domain_info["domain"]
 
-    required_skills = extract_required_skills_from_jd(clean_text)
-    preferred_skills = extract_preferred_skills(clean_text, required_skills)
-    responsibilities = extract_responsibilities(clean_text)
+    required_skills = extract_skills_from_sentences(sentences)
+    preferred_skills = extract_preferred_skills(jd_text)
+    responsibilities = extract_responsibilities(jd_text)
+    soft_skills = extract_soft_skills(jd_text)
 
-    parsed = {
-        "full_text": jd_text,
+    return {
+        "raw_text": jd_text,
         "clean_text": clean_text,
-        "domain": domain,
+
+        "job_domain": domain_info["domain"],
         "domain_confidence": domain_info["confidence"],
+
         "required_skills": required_skills,
         "preferred_skills": preferred_skills,
+        "soft_skills": soft_skills,
+
         "responsibilities": responsibilities,
-        "education_requirement": extract_education_requirement(clean_text),
-        "experience_required": extract_experience_requirement(clean_text),
-        "seniority_level": extract_seniority_from_jd(clean_text)
+
+        "education_requirement": extract_education_requirement(jd_text),
+        "experience_required": extract_experience_requirement(jd_text),
+        "seniority_level": extract_seniority_from_jd(jd_text),
     }
-
-    parsed["jd_quality"] = get_jd_quality_score(parsed)
-
-    return parsed

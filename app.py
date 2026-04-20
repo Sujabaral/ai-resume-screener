@@ -19,19 +19,10 @@ latest_result = []
 
 
 def allowed_file(filename):
-    return "." in filename and filename.rsplit(".", 1)[1].lower() in app.config["ALLOWED_EXTENSIONS"]
-
-
-def score_label(score):
-    if score >= 80:
-        return "Excellent Match"
-    if score >= 65:
-        return "Strong Match"
-    if score >= 50:
-        return "Moderate Match"
-    if score >= 35:
-        return "Weak Match"
-    return "Low Match"
+    return (
+        "." in filename
+        and filename.rsplit(".", 1)[1].lower() in app.config["ALLOWED_EXTENSIONS"]
+    )
 
 
 def safe_float(value, default=0.0):
@@ -47,56 +38,37 @@ def round_score(value, digits=2):
     return round(safe_float(value), digits)
 
 
-def generate_badges(result, all_results):
-    badges = []
+def get_relative_label(score, rank):
+    """
+    Rank is relative to uploaded batch.
+    Label reflects absolute fit.
+    """
+    score = safe_float(score)
 
-    if result.get("rank") == 1:
-        badges.append("Top Overall Match")
-
-    max_skill = max((r.get("skill_coverage", 0) for r in all_results), default=0)
-    max_semantic = max((r.get("semantic_score", 0) for r in all_results), default=0)
-    max_experience = max((r.get("experience_score", 0) for r in all_results), default=0)
-    max_responsibility = max((r.get("responsibility_score", 0) for r in all_results), default=0)
-    max_education = max((r.get("education_score", 0) for r in all_results), default=0)
-    max_soft_skill = max((r.get("soft_skill_score", 0) for r in all_results), default=0)
-
-    if result.get("skill_coverage", 0) == max_skill and max_skill > 0:
-        badges.append("Best Skill Coverage")
-
-    if result.get("semantic_score", 0) == max_semantic and max_semantic > 0:
-        badges.append("Best Semantic Match")
-
-    if result.get("experience_score", 0) == max_experience and max_experience > 0:
-        badges.append("Best Experience Fit")
-
-    if result.get("responsibility_score", 0) == max_responsibility and max_responsibility > 0:
-        badges.append("Best Responsibility Match")
-
-    if result.get("education_score", 0) == max_education and max_education > 0:
-        badges.append("Best Education Fit")
-
-    if result.get("soft_skill_score", 0) == max_soft_skill and max_soft_skill > 0:
-        badges.append("Best Soft Skills")
-
-    if result.get("match_score", 0) >= 80:
-        badges.append("Excellent Fit")
-    elif result.get("match_score", 0) >= 65:
-        badges.append("Strong Candidate")
-    elif result.get("match_score", 0) >= 50:
-        badges.append("Moderate Candidate")
-
-    return badges
+    if score >= 80:
+        return "Excellent Match"
+    if score >= 65:
+        return "Strong Match"
+    if score >= 50:
+        return "Moderate Match"
+    if score >= 35:
+        return "Weak Fit"
+    if rank == 1:
+        return "Low Match (Top in batch)"
+    return "Low Match"
 
 
 def build_weights(scores):
+    """
+    Build clean component snapshot for UI.
+    """
     return {
         "semantic_score": round_score(scores.get("semantic_score", 0.0)),
-        "skill_match_score": round_score(scores.get("skill_score", 0.0)),
-        "responsibility_score": round_score(scores.get("responsibility_score", 0.0)),
+        "skill_match_score": round_score(scores.get("skills_score", 0.0)),
+        "responsibility_score": round_score(scores.get("responsibilities_score", 0.0)),
         "experience_score": round_score(scores.get("experience_score", 0.0)),
         "education_score": round_score(scores.get("education_score", 0.0)),
-        "keyword_alignment_score": round_score(scores.get("keyword_alignment_score", 0.0)),
-        "soft_skill_score": round_score(scores.get("soft_skill_score", 0.0)),
+        "soft_skill_score": round_score(scores.get("soft_skills_score", 0.0)),
     }
 
 
@@ -106,10 +78,11 @@ def normalize_result_structure(result):
     result.setdefault("responsibility_score", 0.0)
     result.setdefault("experience_score", 0.0)
     result.setdefault("education_score", 0.0)
-    result.setdefault("keyword_alignment_score", 0.0)
     result.setdefault("soft_skill_score", 0.0)
     result.setdefault("matched_skills", [])
     result.setdefault("missing_skills", [])
+    result.setdefault("matched_soft_skills", [])
+    result.setdefault("missing_soft_skills", [])
     result.setdefault("strengths", [])
     result.setdefault("weaknesses", [])
     result.setdefault("insights", [])
@@ -117,18 +90,61 @@ def normalize_result_structure(result):
     result.setdefault("ai_explanation", "")
     result.setdefault("resume_preview", "")
     result.setdefault("job_domain", "general")
-    result.setdefault("candidate_name", result.get("resume_filename", "Unknown Candidate"))
-    result.setdefault("match_label", score_label(result.get("match_score", 0)))
+    result.setdefault(
+        "candidate_name",
+        result.get("resume_filename", "Unknown Candidate")
+    )
+    result.setdefault("match_label", "Low Match")
     result.setdefault("weights", {
         "semantic_score": result.get("semantic_score", 0.0),
         "skill_match_score": result.get("skill_coverage", 0.0),
         "responsibility_score": result.get("responsibility_score", 0.0),
         "experience_score": result.get("experience_score", 0.0),
         "education_score": result.get("education_score", 0.0),
-        "keyword_alignment_score": result.get("keyword_alignment_score", 0.0),
         "soft_skill_score": result.get("soft_skill_score", 0.0),
     })
     return result
+
+
+def generate_badges(result, all_results):
+    badges = []
+
+    if result.get("rank") == 1:
+        badges.append("Top Candidate")
+
+    max_skill = max((safe_float(r.get("skill_coverage", 0)) for r in all_results), default=0)
+    max_semantic = max((safe_float(r.get("semantic_score", 0)) for r in all_results), default=0)
+    max_experience = max((safe_float(r.get("experience_score", 0)) for r in all_results), default=0)
+    max_responsibility = max((safe_float(r.get("responsibility_score", 0)) for r in all_results), default=0)
+    max_education = max((safe_float(r.get("education_score", 0)) for r in all_results), default=0)
+    max_soft_skill = max((safe_float(r.get("soft_skill_score", 0)) for r in all_results), default=0)
+
+    if safe_float(result.get("skill_coverage", 0)) == max_skill and max_skill > 0:
+        badges.append("Best Skill Coverage")
+
+    if safe_float(result.get("semantic_score", 0)) == max_semantic and max_semantic > 0:
+        badges.append("Best Semantic Match")
+
+    if safe_float(result.get("experience_score", 0)) == max_experience and max_experience > 0:
+        badges.append("Best Experience Fit")
+
+    if safe_float(result.get("responsibility_score", 0)) == max_responsibility and max_responsibility > 0:
+        badges.append("Best Responsibility Match")
+
+    if safe_float(result.get("education_score", 0)) == max_education and max_education > 0:
+        badges.append("Best Education Fit")
+
+    if safe_float(result.get("soft_skill_score", 0)) == max_soft_skill and max_soft_skill > 0:
+        badges.append("Best Soft Skills")
+
+    if safe_float(result.get("match_score", 0)) >= 80:
+        badges.append("Excellent Overall Fit")
+    elif safe_float(result.get("match_score", 0)) >= 65:
+        badges.append("Strong Overall Fit")
+    elif safe_float(result.get("match_score", 0)) >= 50:
+        badges.append("Moderate Overall Fit")
+
+    return badges
 
 
 def build_report_text(result):
@@ -145,7 +161,6 @@ def build_report_text(result):
         f"Responsibility Score: {result.get('responsibility_score', 0)}%",
         f"Experience Score: {result.get('experience_score', 0)}%",
         f"Education Score: {result.get('education_score', 0)}%",
-        f"Keyword Alignment Score: {result.get('keyword_alignment_score', 0)}%",
         f"Soft Skill Score: {result.get('soft_skill_score', 0)}%",
         "",
         "Matched Skills:",
@@ -153,6 +168,12 @@ def build_report_text(result):
         "",
         "Missing Skills:",
         ", ".join(result.get("missing_skills", [])) if result.get("missing_skills") else "None",
+        "",
+        "Matched Soft Skills:",
+        ", ".join(result.get("matched_soft_skills", [])) if result.get("matched_soft_skills") else "None",
+        "",
+        "Missing Soft Skills:",
+        ", ".join(result.get("missing_soft_skills", [])) if result.get("missing_soft_skills") else "None",
         "",
         "Strengths:"
     ]
@@ -201,7 +222,6 @@ def build_pdf_report(result):
     write_line(f"Responsibility Score: {result.get('responsibility_score', 0)}%")
     write_line(f"Experience Score: {result.get('experience_score', 0)}%")
     write_line(f"Education Score: {result.get('education_score', 0)}%")
-    write_line(f"Keyword Alignment Score: {result.get('keyword_alignment_score', 0)}%")
     write_line(f"Soft Skill Score: {result.get('soft_skill_score', 0)}%")
     write_line("")
 
@@ -300,33 +320,36 @@ def analyze():
             scores = calculate_match_score(resume_data, jd_data)
             summary = generate_result_summary(scores, resume_data, jd_data)
 
+            final_score = round_score(scores.get("final_score", 0.0))
+
             result = {
                 "resume_filename": filename,
                 "candidate_name": resume_data.get("name", filename),
 
-                "match_score": round_score(scores.get("final_score", 0.0)),
-                "match_label": score_label(safe_float(scores.get("final_score", 0.0))),
+                "match_score": final_score,
+                "match_label": scores.get("score_label", "Low Match"),
 
                 "semantic_score": round_score(scores.get("semantic_score", 0.0)),
-                "skill_coverage": round_score(scores.get("skill_score", 0.0)),
-                "responsibility_score": round_score(scores.get("responsibility_score", 0.0)),
+                "skill_coverage": round_score(scores.get("skills_score", 0.0)),
+                "responsibility_score": round_score(scores.get("responsibilities_score", 0.0)),
                 "experience_score": round_score(scores.get("experience_score", 0.0)),
                 "education_score": round_score(scores.get("education_score", 0.0)),
-                "keyword_alignment_score": round_score(scores.get("keyword_alignment_score", 0.0)),
-                "soft_skill_score": round_score(scores.get("soft_skill_score", 0.0)),
+                "soft_skill_score": round_score(scores.get("soft_skills_score", 0.0)),
 
                 "matched_skills": scores.get("matched_skills", []),
                 "missing_skills": scores.get("missing_skills", []),
+                "matched_soft_skills": scores.get("matched_soft_skills", []),
+                "missing_soft_skills": scores.get("missing_soft_skills", []),
 
-                "strengths": summary.get("strengths", []),
-                "weaknesses": summary.get("weaknesses", []),
+                "strengths": summary.get("strengths", scores.get("strengths", [])),
+                "weaknesses": summary.get("weaknesses", scores.get("weaknesses", [])),
                 "insights": summary.get("insights", []),
 
                 "ai_explanation": summary.get("explanation", ""),
 
                 "resume_preview": resume_data.get("clean_text", "")[:1000],
                 "job_description_preview": job_description[:1000],
-                "job_domain": jd_data.get("domain", "general"),
+                "job_domain": jd_data.get("job_domain", "general"),
 
                 "weights": build_weights(scores),
             }
@@ -348,17 +371,20 @@ def analyze():
 
     for i, result in enumerate(results, start=1):
         result["rank"] = i
+        result["match_label"] = get_relative_label(result.get("match_score", 0), i)
 
     for result in results:
         result["badges"] = generate_badges(result, results)
 
     latest_result = results
-
     top_result = results[0]
 
     top_summary = {
         "resume_filename": top_result.get("resume_filename", "Unknown"),
-        "candidate_name": top_result.get("candidate_name", top_result.get("resume_filename", "Unknown")),
+        "candidate_name": top_result.get(
+            "candidate_name",
+            top_result.get("resume_filename", "Unknown")
+        ),
         "match_score": top_result.get("match_score", 0),
         "match_label": top_result.get("match_label", "N/A"),
         "job_domain": top_result.get("job_domain", "general"),
@@ -379,28 +405,43 @@ def analyze():
         top_summary["why_top"].append("Education background matches the job requirement.")
     if top_result.get("soft_skill_score", 0) >= 60:
         top_summary["why_top"].append("Soft skills are strongly reflected in the resume.")
+
     if not top_summary["why_top"]:
-        top_summary["why_top"].append("This resume ranked highest within the uploaded batch.")
+        if top_result.get("match_score", 0) < 40:
+            top_summary["why_top"].append(
+                "This resume ranked highest in the current uploaded batch, but overall fit is still limited."
+            )
+        else:
+            top_summary["why_top"].append(
+                "This resume ranked highest within the uploaded batch."
+            )
 
     comparison_chart = {
-        "labels": [r.get("resume_filename", f"Resume {idx + 1}") for idx, r in enumerate(results)],
+        "labels": [
+            r.get("candidate_name", r.get("resume_filename", f"Resume {idx + 1}"))
+            for idx, r in enumerate(results)
+        ],
         "match_scores": [r.get("match_score", 0) for r in results],
         "semantic_scores": [r.get("semantic_score", 0) for r in results],
         "skill_scores": [r.get("skill_coverage", 0) for r in results],
         "responsibility_scores": [r.get("responsibility_score", 0) for r in results],
+        "experience_scores": [r.get("experience_score", 0) for r in results],
+        "education_scores": [r.get("education_score", 0) for r in results],
+        "soft_skill_scores": [r.get("soft_skill_score", 0) for r in results],
     }
 
     radar_chart = {
-        "labels": ["Semantic", "Skills", "Responsibilities", "Experience", "Education"],
+        "labels": ["Semantic", "Skills", "Responsibilities", "Experience", "Education", "Soft Skills"],
         "datasets": [
             {
-                "label": r.get("resume_filename", f"Resume {idx + 1}"),
+                "label": r.get("candidate_name", r.get("resume_filename", f"Resume {idx + 1}")),
                 "data": [
                     r.get("semantic_score", 0),
                     r.get("skill_coverage", 0),
                     r.get("responsibility_score", 0),
                     r.get("experience_score", 0),
-                    r.get("education_score", 0)
+                    r.get("education_score", 0),
+                    r.get("soft_skill_score", 0)
                 ]
             }
             for idx, r in enumerate(results[:3])
