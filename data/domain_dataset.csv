@@ -1,0 +1,151 @@
+text,domain
+"Python Flask API development, backend systems, SQL databases, Git, debugging, REST APIs",software
+"Java Spring Boot, microservices, backend architecture, database integration, software engineering",software
+"Frontend development, HTML CSS JavaScript React UI implementation, responsive web applications",software
+"Software testing, debugging, version control, application development lifecycle, programming logic",software
+"Django web development, backend logic, ORM, deployment, Python coding, API integration",software
+"Machine learning, data preprocessing, model training, feature engineering, predictive analytics",data
+"Data analysis, pandas, NumPy, dashboards, statistics, reporting, business intelligence",data
+"SQL querying, Power BI, Excel analytics, data cleaning, visualization, KPI reporting",data
+"Deep learning, NLP, classification models, embeddings, AI pipelines, model evaluation",data
+"ETL pipelines, analytics engineering, data warehousing, metrics, dashboards, structured data",data
+"Social media content creation, branding, copywriting, campaign planning, engagement growth",marketing
+"Digital marketing, SEO, SEM, ad campaigns, brand awareness, audience targeting, analytics",marketing
+"Content writing, email marketing, content strategy, social media management, branding",marketing
+"Marketing research, campaign reporting, customer engagement, promotions, online visibility",marketing
+"Brand storytelling, community engagement, content calendars, creative promotions",marketing
+"Recruitment, onboarding, employee relations, performance review, HR policies, talent acquisition",hr
+"Human resources, payroll coordination, hiring support, employee engagement, attendance management",hr
+"Screening candidates, scheduling interviews, HR administration, compliance, onboarding process",hr
+"Workforce planning, people operations, policy documentation, training coordination, HR reporting",hr
+"Talent sourcing, employee records, conflict resolution, internal communication, HR support",hr
+"Sales pipeline, lead generation, client acquisition, product pitching, revenue growth, CRM",sales
+"Customer meetings, target achievement, sales conversion, account management, prospect follow-up",sales
+"Business development, lead nurturing, client communication, negotiation, closing deals",sales
+"Field sales, relationship building, market outreach, revenue targets, customer persuasion",sales
+"Inside sales, prospecting, client retention, cross-selling, sales strategy execution",sales
+"Accounting, bookkeeping, financial statements, taxation, reconciliation, ledger management",finance
+"Budgeting, invoice processing, accounts payable, accounts receivable, financial reporting",finance
+"Financial analysis, Excel reporting, auditing support, forecasting, compliance, banking operations",finance
+"Cash flow tracking, payroll accounting, financial records, budget monitoring, expense analysis",finance
+"Tax filing, account reconciliation, balance sheets, journals, reporting accuracy",finance
+"Graphic design, Adobe Photoshop, Illustrator, branding assets, visual communication, layouts",design
+"UI UX design, wireframing, prototyping, Figma, user flows, interaction design",design
+"Visual design, typography, color systems, creative assets, design thinking, mockups",design
+"Product design, usability testing, interface design, user research, prototypes",design
+"Creative design, posters, social media graphics, visual storytelling, design tools",design
+"Operations management, process improvement, coordination, logistics, workflow efficiency, execution",operations
+"Inventory tracking, vendor coordination, documentation, scheduling, operational support",operations
+"Administrative coordination, reporting, daily operations, resource planning, task management",operations
+"Operations analysis, process monitoring, compliance tracking, execution support, service delivery",operations
+"Cross-functional coordination, logistics planning, operational reporting, issue resolution",operations
+"Customer support, ticket resolution, complaint handling, client communication, issue tracking",customer_support
+"Help desk support, customer queries, troubleshooting, service quality, CRM updates",customer_support
+"Call handling, issue resolution, customer satisfaction, support operations, communication skills",customer_support
+"Technical support, support tickets, client assistance, escalation handling, response management",customer_support
+"Customer service, live chat, complaint response, problem solving, support coordination",customer_support
+"Teaching, lesson planning, classroom instruction, student assessment, curriculum delivery",education
+"Academic support, training sessions, educational content, mentoring, evaluation, learning outcomes",education
+"Lecture preparation, course materials, student guidance, classroom engagement, pedagogy",education
+"Nursing care, patient monitoring, medication administration, clinical documentation, health support",healthcare
+"Patient communication, hospital coordination, vital signs, treatment support, healthcare service",healthcare
+"Clinical assistance, patient care, nursing ethics, medication safety, ward support",healthcare
+"Research writing, literature review, data collection, analysis, reporting, publication support",research
+"Survey design, research methodology, academic writing, findings interpretation, documentation",research
+"Field research, data gathering, qualitative analysis, report preparation, evidence synthesis",research
+"Project coordination, planning, deadlines, stakeholder updates, team follow-up, task tracking",project_management
+"Project documentation, scheduling, communication, milestone monitoring, risk tracking",project_management
+"Agile coordination, sprint planning, stakeholder communication, project execution, reporting",project_management
+"Python Flask API development, backend systems, SQL databases, Git, debugging, REST APIs",software
+"Java Spring Boot, microservices, backend architecture, database integration, software engineering",software
+"Frontend development, HTML CSS JavaScript React UI implementation, responsive web applications",software
+"Software testing, debugging, version control, application development lifecycle, programming logic",software
+"Django web development, backend logic, ORM, deployment, Python coding, API integration",software
+"Node.js backend services, Express APIs, database queries, software debugging, deployment workflows",software
+"Object oriented programming, software maintenance, bug fixing, code reviews, Git collaboration",software
+"Mobile app development, Android studio, Kotlin basics, UI integration, software lifecycle",software
+"Machine learning, data preprocessing, model training, feature engineering, predictive analytics",data
+"Data analysis, pandas, NumPy, dashboards, statistics, reporting, business intelligence",data
+"SQL querying, Power BI, Excel analytics, data cleaning, visualization, KPI reporting",data
+"Deep learning, NLP, classification models, embeddings, AI pipelines, model evaluation",data
+"ETL pipelines, analytics engineering, data warehousing, metrics, dashboards, structured data",data
+"Forecasting models, regression analysis, feature selection, data wrangling, evaluation metrics",data
+"Data mining, exploratory analysis, Python notebooks, trend analysis, reporting automation",data
+"Tableau dashboards, business metrics, SQL joins, insight generation, stakeholder reporting",data
+"Social media content creation, branding, copywriting, campaign planning, engagement growth",marketing
+"Digital marketing, SEO, SEM, ad campaigns, brand awareness, audience targeting, analytics",marketing
+"Content writing, email marketing, content strategy, social media management, branding",marketing
+"Marketing research, campaign reporting, customer engagement, promotions, online visibility",marketing
+"Brand storytelling, community engagement, content calendars, creative promotions",marketing
+"Audience growth, reels strategy, creative copy, influencer outreach, campaign coordination",marketing
+"Performance marketing, ad optimization, click through analysis, lead generation campaigns",marketing
+"Market research, customer behavior analysis, promotions planning, brand communication",marketing
+"Recruitment, onboarding, employee relations, performance review, HR policies, talent acquisition",hr
+"Human resources, payroll coordination, hiring support, employee engagement, attendance management",hr
+"Screening candidates, scheduling interviews, HR administration, compliance, onboarding process",hr
+"Workforce planning, people operations, policy documentation, training coordination, HR reporting",hr
+"Talent sourcing, employee records, conflict resolution, internal communication, HR support",hr
+"HR documentation, leave tracking, employee support, induction sessions, compliance records",hr
+"Candidate sourcing, interview coordination, onboarding checklists, HR operations support",hr
+"Training coordination, people management support, employee records, attendance administration",hr
+"Sales pipeline, lead generation, client acquisition, product pitching, revenue growth, CRM",sales
+"Customer meetings, target achievement, sales conversion, account management, prospect follow-up",sales
+"Business development, lead nurturing, client communication, negotiation, closing deals",sales
+"Field sales, relationship building, market outreach, revenue targets, customer persuasion",sales
+"Inside sales, prospecting, client retention, cross-selling, sales strategy execution",sales
+"Lead qualification, outbound calls, product demos, pipeline tracking, sales reporting",sales
+"Business expansion, client pitching, relationship management, sales targets, account growth",sales
+"Retail sales, upselling, target completion, customer persuasion, revenue contribution",sales
+"Accounting, bookkeeping, financial statements, taxation, reconciliation, ledger management",finance
+"Budgeting, invoice processing, accounts payable, accounts receivable, financial reporting",finance
+"Financial analysis, Excel reporting, auditing support, forecasting, compliance, banking operations",finance
+"Cash flow tracking, payroll accounting, financial records, budget monitoring, expense analysis",finance
+"Tax filing, account reconciliation, balance sheets, journals, reporting accuracy",finance
+"General ledger updates, invoice verification, banking records, reconciliations, finance support",finance
+"Expense monitoring, profit analysis, bookkeeping accuracy, budget review, accounting systems",finance
+"Auditing support, tax documentation, financial compliance, statement preparation, reconciliation",finance
+"Graphic design, Adobe Photoshop, Illustrator, branding assets, visual communication, layouts",design
+"UI UX design, wireframing, prototyping, Figma, user flows, interaction design",design
+"Visual design, typography, color systems, creative assets, design thinking, mockups",design
+"Product design, usability testing, interface design, user research, prototypes",design
+"Creative design, posters, social media graphics, visual storytelling, design tools",design
+"Logo creation, brand identity, design systems, layout composition, illustration work",design
+"Web design, landing page mockups, Figma prototyping, interaction flows, UI components",design
+"Creative direction, visual branding, poster design, campaign graphics, composition",design
+"Operations management, process improvement, coordination, logistics, workflow efficiency, execution",operations
+"Inventory tracking, vendor coordination, documentation, scheduling, operational support",operations
+"Administrative coordination, reporting, daily operations, resource planning, task management",operations
+"Operations analysis, process monitoring, compliance tracking, execution support, service delivery",operations
+"Cross-functional coordination, logistics planning, operational reporting, issue resolution",operations
+"Scheduling, office coordination, documentation control, process execution, operations assistance",operations
+"Vendor follow-up, stock handling, workflow monitoring, operations planning, service coordination",operations
+"Back office operations, documentation, planning, coordination, execution tracking",operations
+"Customer support, ticket resolution, complaint handling, client communication, issue tracking",customer_support
+"Help desk support, customer queries, troubleshooting, service quality, CRM updates",customer_support
+"Call handling, issue resolution, customer satisfaction, support operations, communication skills",customer_support
+"Technical support, support tickets, client assistance, escalation handling, response management",customer_support
+"Customer service, live chat, complaint response, problem solving, support coordination",customer_support
+"Email support, ticket updates, issue logging, customer communication, complaint handling",customer_support
+"Client support desk, troubleshooting, escalation management, service assistance, CRM notes",customer_support
+"Support representative, user issue resolution, live chat support, satisfaction follow-up",customer_support
+"Teaching, lesson planning, classroom instruction, student assessment, curriculum delivery",education
+"Academic support, training sessions, educational content, mentoring, evaluation, learning outcomes",education
+"Lecture preparation, course materials, student guidance, classroom engagement, pedagogy",education
+"Curriculum planning, student support, learning assessment, educational delivery, lesson design",education
+"Teaching assistance, classroom management, assignment checking, student mentoring, education support",education
+"School instruction, subject explanation, student progress tracking, lesson preparation",education
+"Nursing care, patient monitoring, medication administration, clinical documentation, health support",healthcare
+"Patient communication, hospital coordination, vital signs, treatment support, healthcare service",healthcare
+"Clinical assistance, patient care, nursing ethics, medication safety, ward support",healthcare
+"Hospital support, patient observation, medication handling, care documentation, clinical duties",healthcare
+"Healthcare assistance, treatment coordination, nursing support, patient wellbeing, ward records",healthcare
+"Research writing, literature review, data collection, analysis, reporting, publication support",research
+"Survey design, research methodology, academic writing, findings interpretation, documentation",research
+"Field research, data gathering, qualitative analysis, report preparation, evidence synthesis",research
+"Academic research, manuscript preparation, data coding, thematic analysis, report writing",research
+"Literature synthesis, survey analysis, methodology writing, findings reporting, publication tasks",research
+"Project coordination, planning, deadlines, stakeholder updates, team follow-up, task tracking",project_management
+"Project documentation, scheduling, communication, milestone monitoring, risk tracking",project_management
+"Agile coordination, sprint planning, stakeholder communication, project execution, reporting",project_management
+"Timeline tracking, team coordination, task assignment, status reporting, project delivery",project_management
+"Milestone planning, meeting follow-up, stakeholder communication, project monitoring, execution",project_management

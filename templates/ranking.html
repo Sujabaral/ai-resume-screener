@@ -3,406 +3,372 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ATS Dashboard Results</title>
+    <title>ATS Ranking Dashboard</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <div class="page">
-        <div class="container">
+        <div class="container dashboard">
 
-            <header class="top-bar">
+            <!-- HERO -->
+            <section class="hero-card">
                 <div>
-                    <span class="eyebrow">AI Resume Screener v2.0</span>
+                    <p class="eyebrow">AI Resume Screener v4</p>
                     <h1>ATS Ranking Dashboard</h1>
-                    <p class="subtext">
+                    <p class="hero-subtitle">
                         Multi-factor ranking using semantic fit, skill coverage, responsibilities,
-                        experience, education, and explainable AI insights.
+                        experience, education, soft skills, explainable AI reasoning, and evidence matching.
                     </p>
                 </div>
+                <a href="/" class="secondary-btn">Analyze Again</a>
+            </section>
 
-                <div class="top-actions">
-                    <a href="/" class="secondary-btn">Analyze Again</a>
-                    <a href="/download-report" class="primary-btn">Export Top PDF Report</a>
-                </div>
-            </header>
+            {% if results and results|length > 0 %}
+                {% set top = results[0] %}
 
-            {% if top_summary %}
-            <section class="section-card">
-                <div class="summary-hero">
-                    <div>
-                        <span class="eyebrow">Top Candidate</span>
-                        <h2>{{ top_summary.get('candidate_name', 'Unknown Candidate') }}</h2>
-                        <p class="subtext">
-                            <strong>Resume:</strong> {{ top_summary.get('resume_filename', 'N/A') }}
-                        </p>
-                        <p class="subtext">
-                            <strong>Domain:</strong>
-                            {{ top_summary.get('job_domain', 'general').replace("_", " ").title() }}
-                        </p>
-                        <p class="subtext">
-                            Ranked highest among {{ results|length }} candidate{% if results|length != 1 %}s{% endif %}
-                            in this comparison batch.
+                <!-- TOP CANDIDATE -->
+                <section class="top-candidate-card">
+                    <div class="top-candidate-left">
+                        <span class="section-kicker">Top Candidate</span>
+                        <h2>{{ top.name or "Unknown Candidate" }}</h2>
+                        <p><strong>Resume:</strong> {{ top.filename or "N/A" }}</p>
+                        <p><strong>Domain:</strong> {{ top.predicted_domain|default("Unknown")|title }}</p>
+                        <p class="muted">
+                            Ranked highest among {{ results|length }} candidate{{ '' if results|length == 1 else 's' }} in this comparison batch.
                         </p>
                     </div>
 
-                    <div>
-                        <div class="hero-score">{{ top_summary.get('match_score', 0) }}%</div>
-                        <div class="hero-label">{{ top_summary.get('match_label', 'Match') }}</div>
-                        <div class="progress">
-                            <div class="progress-bar" style="width: {{ top_summary.get('match_score', 0) }}%;"></div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <section class="two-column">
-                <div class="section-card">
-                    <h2>Why this candidate ranked highest</h2>
-                    <p class="subtext">Based on overall multi-factor scoring compared to the other resumes.</p>
-
-                    {% if top_summary.get('why_top') %}
-                    <ul>
-                        {% for reason in top_summary.get('why_top', []) %}
-                        <li>{{ reason }}</li>
-                        {% endfor %}
-                    </ul>
-                    {% else %}
-                    <p class="muted">No top-candidate explanation available.</p>
-                    {% endif %}
-                </div>
-
-                <div class="section-card">
-                    <h2>Ranking interpretation</h2>
-                    <p class="subtext">
-                        Rank is relative to the current batch of uploaded resumes.
-                        A candidate can rank #1 in the batch even if the absolute match score is moderate or low.
-                    </p>
-
-                    <div class="badge-container">
-                        <span class="badge success">70%+ Strong Match</span>
-                        <span class="badge warning">50–69% Moderate Match</span>
-                        <span class="badge danger">Below 50% Low Match</span>
-                    </div>
-                </div>
-            </section>
-            {% endif %}
-
-            {% if comparison_chart %}
-            <section class="section-card">
-                <h2>Candidate Comparison</h2>
-                <p class="subtext">Final score and core components across all candidates.</p>
-                <div class="chart-wrap">
-                    <canvas id="rankingChart"></canvas>
-                </div>
-            </section>
-            {% endif %}
-
-            {% if radar_chart %}
-            <section class="section-card">
-                <h2>Top 3 Radar Comparison</h2>
-                <p class="subtext">Quick visual comparison of the strongest three candidates.</p>
-                <div class="chart-wrap">
-                    <canvas id="radarChart"></canvas>
-                </div>
-            </section>
-            {% endif %}
-
-            {% for result in results %}
-            {% set w = result.get('weights', {}) %}
-
-            <section class="candidate-card">
-                <div class="candidate-top">
-                    <div>
-                        <div class="candidate-line">
-                            <span class="rank-chip">#{{ result.get('rank', loop.index) }}</span>
-                            <h2 style="margin-bottom: 0;">{{ result.get('candidate_name', 'Unknown Candidate') }}</h2>
-                        </div>
-
-                        <p class="subtext" style="margin-top: 10px;">
-                            {{ result.get('resume_filename', 'Unknown Resume') }}
-                        </p>
-
-                        <p class="subtext">
-                            <strong>Domain:</strong>
-                            {{ result.get('job_domain', 'general').replace("_", " ").title() }}
-                            {% if result.get('domain_confidence') is not none %}
-                            <span class="muted">({{ (result.get('domain_confidence', 0) * 100)|round(1) }}% confidence)</span>
+                    <div class="top-candidate-score">
+                        <div class="score-big">{{ "%.2f"|format(top.final_score|default(0)) }}%</div>
+                        <div class="score-label 
+                            {% if top.final_score >= 70 %}strong
+                            {% elif top.final_score >= 50 %}moderate
+                            {% else %}low
+                            {% endif %}">
+                            {% if top.final_score >= 70 %}
+                                Strong Match
+                            {% elif top.final_score >= 50 %}
+                                Moderate Match
+                            {% else %}
+                                Low Match
                             {% endif %}
+                            {% if results|length > 1 %}(Top in batch){% endif %}
+                        </div>
+                        <div class="mini-progress">
+                            <div class="mini-progress-fill" style="width: {{ top.final_score|default(0) }}%;"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- TOP INSIGHT CARDS -->
+                <section class="summary-grid">
+                    <div class="info-card">
+                        <h3>Why this candidate ranked highest</h3>
+                        <p class="muted">
+                            Based on overall multi-factor scoring compared to the other resumes.
                         </p>
+                        <ul class="compact-list">
+                            <li>Semantic alignment is {{ top.semantic_score_label|default("moderate") }} ({{ "%.2f"|format(top.semantic_score|default(0)) }}%).</li>
+                            <li>Skill coverage is {{ top.skill_score_label|default("moderate") }} ({{ "%.2f"|format(top.skill_score|default(0)) }}%).</li>
+                            <li>Responsibility match is {{ top.responsibility_score_label|default("moderate") }} ({{ "%.2f"|format(top.responsibility_score|default(0)) }}%).</li>
+                            <li>Experience fit is {{ top.experience_score_label|default("moderate") }} ({{ "%.2f"|format(top.experience_score|default(0)) }}%).</li>
+                        </ul>
                     </div>
 
-                    <div class="candidate-score-box">
-                        <div class="big-score">{{ result.get('match_score', 0) }}%</div>
-
-                        {% if result.get('match_score', 0) >= 70 %}
-                            <div class="score-pill badge success">{{ result.get('match_label', 'Strong Match') }}</div>
-                        {% elif result.get('match_score', 0) >= 50 %}
-                            <div class="score-pill badge warning">{{ result.get('match_label', 'Moderate Match') }}</div>
-                        {% else %}
-                            <div class="score-pill badge danger">{{ result.get('match_label', 'Low Match') }}</div>
-                        {% endif %}
-
-                        <p class="muted" style="margin-top: 10px;">Compared to other candidates in this batch</p>
+                    <div class="info-card">
+                        <h3>Ranking interpretation</h3>
+                        <p class="muted">
+                            Rank is relative to the current uploaded batch. A resume can still be rank #1 even
+                            when its absolute score is low if the others score lower.
+                        </p>
+                        <div class="legend-badges">
+                            <span class="legend-badge strong">70%+ Strong Match</span>
+                            <span class="legend-badge moderate">50–69% Moderate Match</span>
+                            <span class="legend-badge low">Below 50% Low Match</span>
+                        </div>
                     </div>
-                </div>
+                </section>
 
-                <div class="progress">
-                    <div class="progress-bar" style="width: {{ result.get('match_score', 0) }}%;"></div>
-                </div>
+                <!-- BAR CHART -->
+                <section class="panel-card">
+                    <div class="panel-header">
+                        <div>
+                            <h3>Candidate Comparison</h3>
+                            <p class="muted">Final score and major scoring components across all candidates.</p>
+                        </div>
+                    </div>
+                    <div class="chart-box chart-box-lg">
+                        <canvas id="comparisonChart"></canvas>
+                    </div>
+                </section>
 
-                {% if result.get('badges') %}
-                <div class="badge-container">
-                    {% for badge in result.get('badges', []) %}
-                    <span class="badge">{{ badge }}</span>
-                    {% endfor %}
-                </div>
+                <!-- RADAR CHART -->
+                {% if results|length > 1 %}
+                <section class="panel-card">
+                    <div class="panel-header">
+                        <div>
+                            <h3>Top 3 Radar Comparison</h3>
+                            <p class="muted">Quick visual comparison of the strongest three candidates.</p>
+                        </div>
+                    </div>
+                    <div class="chart-box chart-box-md">
+                        <canvas id="radarChart"></canvas>
+                    </div>
+                </section>
                 {% endif %}
 
-                <div class="action-row">
-                    <button class="decision-btn shortlist-btn" type="button">Shortlist</button>
-                    <button class="decision-btn reject-btn" type="button">Reject</button>
-                </div>
+                <!-- CANDIDATE DETAILS -->
+                <section class="candidate-list">
+                    {% for candidate in results %}
+                    <article class="candidate-card">
+                        <div class="candidate-head">
+                            <div class="candidate-main">
+                                <span class="rank-badge">#{{ loop.index }}</span>
+                                <h2>{{ candidate.name or "Unknown Candidate" }}</h2>
+                                <p class="file-name">{{ candidate.filename or "N/A" }}</p>
+                                <p><strong>Domain:</strong> {{ candidate.predicted_domain|default("Unknown")|title }}</p>
+                            </div>
 
-                <div class="two-column">
-                    <div class="inner-card">
-                        <h3>AI Explanation</h3>
-                        <div class="insight-box good">
-                            {{ result.get('ai_explanation', 'No AI explanation available.') }}
-                        </div>
-                    </div>
-
-                    <div class="inner-card">
-                        <h3>Why this candidate scored this way</h3>
-                        <ul>
-                            {% if result.get('skill_coverage', 0) >= 60 %}
-                            <li>Strong skill alignment with job requirements.</li>
-                            {% endif %}
-                            {% if result.get('semantic_score', 0) >= 60 %}
-                            <li>Good semantic similarity with the job description.</li>
-                            {% endif %}
-                            {% if result.get('responsibility_score', 0) >= 50 %}
-                            <li>Experience reflects important job responsibilities.</li>
-                            {% endif %}
-                            {% if result.get('experience_score', 0) >= 50 %}
-                            <li>Experience level aligns reasonably well with the role.</li>
-                            {% endif %}
-                            {% if result.get('education_score', 0) >= 60 %}
-                            <li>Education fit is strong for this role.</li>
-                            {% endif %}
-                            {% if result.get('soft_skill_score') is not none and result.get('soft_skill_score', 0) >= 50 %}
-                            <li>Relevant soft skills are visible in the resume.</li>
-                            {% endif %}
-                            {% if result.get('skill_coverage', 0) < 60 and result.get('semantic_score', 0) < 60 and result.get('responsibility_score', 0) < 50 %}
-                            <li>Overall alignment is limited, so stronger role targeting is needed.</li>
-                            {% endif %}
-                        </ul>
-                    </div>
-                </div>
-
-                <div class="score-grid">
-                    <div class="score-card">
-                        <h3>Semantic</h3>
-                        <div class="score-value">{{ result.get('semantic_score', 0) }}%</div>
-                        <div class="progress">
-                            <div class="progress-bar" style="width: {{ result.get('semantic_score', 0) }}%;"></div>
-                        </div>
-                    </div>
-
-                    <div class="score-card">
-                        <h3>Skills</h3>
-                        <div class="score-value">{{ result.get('skill_coverage', 0) }}%</div>
-                        <div class="progress">
-                            <div class="progress-bar" style="width: {{ result.get('skill_coverage', 0) }}%;"></div>
-                        </div>
-                    </div>
-
-                    <div class="score-card">
-                        <h3>Responsibilities</h3>
-                        <div class="score-value">{{ result.get('responsibility_score', 0) }}%</div>
-                        <div class="progress">
-                            <div class="progress-bar" style="width: {{ result.get('responsibility_score', 0) }}%;"></div>
-                        </div>
-                    </div>
-
-                    <div class="score-card">
-                        <h3>Experience</h3>
-                        <div class="score-value">{{ result.get('experience_score', 0) }}%</div>
-                        <div class="progress">
-                            <div class="progress-bar" style="width: {{ result.get('experience_score', 0) }}%;"></div>
-                        </div>
-                    </div>
-
-                    <div class="score-card">
-                        <h3>Education</h3>
-                        <div class="score-value">{{ result.get('education_score', 0) }}%</div>
-                        <div class="progress">
-                            <div class="progress-bar" style="width: {{ result.get('education_score', 0) }}%;"></div>
-                        </div>
-                    </div>
-
-                    <div class="score-card">
-                        <h3>Soft Skills</h3>
-                        <div class="score-value">
-                            {% if result.get('soft_skill_score') is not none %}
-                                {{ result.get('soft_skill_score', 0) }}%
-                            {% else %}
-                                N/A
-                            {% endif %}
-                        </div>
-                        {% if result.get('soft_skill_score') is not none %}
-                        <div class="progress">
-                            <div class="progress-bar" style="width: {{ result.get('soft_skill_score', 0) }}%;"></div>
-                        </div>
-                        {% endif %}
-                    </div>
-                </div>
-
-                <div class="two-column">
-                    <div class="inner-card">
-                        <h3>Matched Skills</h3>
-                        {% if result.get('matched_skills') %}
-                        <div class="tags">
-                            {% for skill in result.get('matched_skills', []) %}
-                            <span>{{ skill }}</span>
-                            {% endfor %}
-                        </div>
-                        {% else %}
-                        <p class="muted">No strongly matched skills found.</p>
-                        {% endif %}
-                    </div>
-
-                    <div class="inner-card">
-                        <h3>Missing Skills</h3>
-                        {% if result.get('missing_skills') %}
-                        <div class="badge-container">
-                            {% for skill in result.get('missing_skills', []) %}
-                            <span class="badge danger">{{ skill }}</span>
-                            {% endfor %}
-                        </div>
-                        {% else %}
-                        <p class="muted">No major missing skills detected.</p>
-                        {% endif %}
-                    </div>
-                </div>
-
-                <div class="two-column">
-                    <div class="inner-card">
-                        <h3>Strengths</h3>
-                        {% if result.get('strengths') %}
-                        <ul>
-                            {% for item in result.get('strengths', []) %}
-                            <li>{{ item }}</li>
-                            {% endfor %}
-                        </ul>
-                        {% else %}
-                        <p class="muted">No major strengths listed.</p>
-                        {% endif %}
-                    </div>
-
-                    <div class="inner-card">
-                        <h3>Weaknesses</h3>
-                        {% if result.get('weaknesses') %}
-                        <ul>
-                            {% for item in result.get('weaknesses', []) %}
-                            <li>{{ item }}</li>
-                            {% endfor %}
-                        </ul>
-                        {% else %}
-                        <p class="muted">No major weaknesses listed.</p>
-                        {% endif %}
-                    </div>
-                </div>
-
-                <div class="inner-card" style="margin-top: 18px;">
-                    <h3>AI Resume Insights</h3>
-                    {% if result.get('insights') %}
-                        {% for insight in result.get('insights', []) %}
-                        <div class="insight-box warning">{{ insight }}</div>
-                        {% endfor %}
-                    {% else %}
-                    <p class="muted">No extra insights available.</p>
-                    {% endif %}
-                </div>
-
-                <hr class="divider">
-
-                <div class="two-column">
-                    <div class="inner-card">
-                        <h3>Resume Preview</h3>
-                        <div class="preview-box">{{ result.get('resume_preview', 'No preview available.') }}</div>
-                    </div>
-
-                    <div class="inner-card">
-                        <h3>Component Breakdown</h3>
-                        <ul>
-                            <li>Semantic: <strong>{{ result.get('semantic_score', 0) }}%</strong></li>
-                            <li>Skills: <strong>{{ result.get('skill_coverage', 0) }}%</strong></li>
-                            <li>Responsibilities: <strong>{{ result.get('responsibility_score', 0) }}%</strong></li>
-                            <li>Experience: <strong>{{ result.get('experience_score', 0) }}%</strong></li>
-                            <li>Education: <strong>{{ result.get('education_score', 0) }}%</strong></li>
-                            <li>Keyword Alignment: <strong>{{ result.get('keyword_score', 0) }}%</strong></li>
-                            <li>Soft Skills:
-                                <strong>
-                                    {% if result.get('soft_skill_score') is not none %}
-                                        {{ result.get('soft_skill_score', 0) }}%
+                            <div class="candidate-score-wrap">
+                                <div class="score-big small">{{ "%.2f"|format(candidate.final_score|default(0)) }}%</div>
+                                <div class="score-pill 
+                                    {% if candidate.final_score >= 70 %}strong
+                                    {% elif candidate.final_score >= 50 %}moderate
+                                    {% else %}low
+                                    {% endif %}">
+                                    {% if candidate.final_score >= 70 %}
+                                        Strong Match
+                                    {% elif candidate.final_score >= 50 %}
+                                        Moderate Match
                                     {% else %}
-                                        N/A
+                                        Low Match
                                     {% endif %}
-                                </strong>
-                            </li>
-                        </ul>
+                                    {% if loop.index == 1 %}(Top in batch){% endif %}
+                                </div>
+                                <p class="muted smaller">Compared to other candidates in this batch</p>
+                            </div>
+                        </div>
 
-                        {% if w %}
-                        <hr class="divider">
-                        <h3>Weight Snapshot</h3>
-                        <ul>
-                            <li>Semantic Weight Value: <strong>{{ w.get('semantic_score', result.get('semantic_score', 0)) }}%</strong></li>
-                            <li>Skill Weight Value: <strong>{{ w.get('skill_match_score', result.get('skill_coverage', 0)) }}%</strong></li>
-                            <li>Responsibility Weight Value: <strong>{{ w.get('responsibility_score', result.get('responsibility_score', 0)) }}%</strong></li>
-                            <li>Experience Weight Value: <strong>{{ w.get('experience_score', result.get('experience_score', 0)) }}%</strong></li>
-                            <li>Education Weight Value: <strong>{{ w.get('education_score', result.get('education_score', 0)) }}%</strong></li>
-                            <li>Keyword Weight Value: <strong>{{ w.get('keyword_alignment_score', result.get('keyword_score', 0)) }}%</strong></li>
-                            <li>Soft Skill Weight Value: <strong>{{ w.get('soft_skill_score', result.get('soft_skill_score', 0)) }}%</strong></li>
-                        </ul>
+                        {% set best_flags = [] %}
+                        {% if candidate.best_final %}{% set _ = best_flags.append('Top Candidate') %}{% endif %}
+                        {% if candidate.best_skill %}{% set _ = best_flags.append('Best Skill Coverage') %}{% endif %}
+                        {% if candidate.best_semantic %}{% set _ = best_flags.append('Best Semantic Match') %}{% endif %}
+                        {% if candidate.best_experience %}{% set _ = best_flags.append('Best Experience Fit') %}{% endif %}
+                        {% if candidate.best_education %}{% set _ = best_flags.append('Best Education Fit') %}{% endif %}
+                        {% if candidate.best_softskills %}{% set _ = best_flags.append('Best Soft Skills') %}{% endif %}
+
+                        {% if best_flags %}
+                        <div class="award-row">
+                            {% for badge in best_flags %}
+                                <span class="award-pill">{{ badge }}</span>
+                            {% endfor %}
+                        </div>
                         {% endif %}
-                    </div>
-                </div>
-            </section>
-            {% endfor %}
+
+                        <div class="detail-grid">
+                            <div class="detail-card">
+                                <h3>AI Explanation</h3>
+                                <div class="explanation-box">
+                                    {{ candidate.ai_explanation|default("No explanation available.") }}
+                                </div>
+                            </div>
+
+                            <div class="detail-card">
+                                <h3>Why this candidate scored this way</h3>
+                                <ul class="compact-list">
+                                    {% if candidate.reasoning_points %}
+                                        {% for point in candidate.reasoning_points %}
+                                            <li>{{ point }}</li>
+                                        {% endfor %}
+                                    {% else %}
+                                        <li>Semantic alignment is {{ candidate.semantic_score_label|default("moderate") }}.</li>
+                                        <li>Skill coverage is {{ candidate.skill_score_label|default("moderate") }}.</li>
+                                        <li>Responsibility match is {{ candidate.responsibility_score_label|default("moderate") }}.</li>
+                                        <li>Experience and education fit influenced final ranking.</li>
+                                    {% endif %}
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="reasoning-block">
+                            <h3>Score Reasoning</h3>
+                            <ul class="compact-list">
+                                <li>Semantic alignment is {{ candidate.semantic_score_label|default("moderate") }} ({{ "%.2f"|format(candidate.semantic_score|default(0)) }}%).</li>
+                                <li>Skill coverage is {{ candidate.skill_score_label|default("moderate") }} ({{ "%.2f"|format(candidate.skill_score|default(0)) }}%).</li>
+                                <li>Responsibility match is {{ candidate.responsibility_score_label|default("moderate") }} ({{ "%.2f"|format(candidate.responsibility_score|default(0)) }}%).</li>
+                                <li>Experience fit is {{ candidate.experience_score_label|default("moderate") }} ({{ "%.2f"|format(candidate.experience_score|default(0)) }}%).</li>
+                                <li>Education fit is {{ candidate.education_score_label|default("moderate") }} ({{ "%.2f"|format(candidate.education_score|default(0)) }}%).</li>
+                                <li>Soft skill fit is {{ candidate.soft_skill_score_label|default("moderate") }} ({{ "%.2f"|format(candidate.soft_skill_score|default(0)) }}%).</li>
+                            </ul>
+                        </div>
+
+                        <div class="metric-grid">
+                            <div class="metric-card">
+                                <h4>Semantic</h4>
+                                <div class="metric-value semantic">{{ "%.2f"|format(candidate.semantic_score|default(0)) }}%</div>
+                                <div class="mini-progress"><div class="mini-progress-fill" style="width: {{ candidate.semantic_score|default(0) }}%;"></div></div>
+                            </div>
+                            <div class="metric-card">
+                                <h4>Skills</h4>
+                                <div class="metric-value skills">{{ "%.2f"|format(candidate.skill_score|default(0)) }}%</div>
+                                <div class="mini-progress"><div class="mini-progress-fill" style="width: {{ candidate.skill_score|default(0) }}%;"></div></div>
+                            </div>
+                            <div class="metric-card">
+                                <h4>Responsibilities</h4>
+                                <div class="metric-value responsibilities">{{ "%.2f"|format(candidate.responsibility_score|default(0)) }}%</div>
+                                <div class="mini-progress"><div class="mini-progress-fill" style="width: {{ candidate.responsibility_score|default(0) }}%;"></div></div>
+                            </div>
+                            <div class="metric-card">
+                                <h4>Experience</h4>
+                                <div class="metric-value experience">{{ "%.2f"|format(candidate.experience_score|default(0)) }}%</div>
+                                <div class="mini-progress"><div class="mini-progress-fill" style="width: {{ candidate.experience_score|default(0) }}%;"></div></div>
+                            </div>
+                            <div class="metric-card">
+                                <h4>Education</h4>
+                                <div class="metric-value education">{{ "%.2f"|format(candidate.education_score|default(0)) }}%</div>
+                                <div class="mini-progress"><div class="mini-progress-fill" style="width: {{ candidate.education_score|default(0) }}%;"></div></div>
+                            </div>
+                            <div class="metric-card">
+                                <h4>Soft Skills</h4>
+                                <div class="metric-value soft">{{ "%.2f"|format(candidate.soft_skill_score|default(0)) }}%</div>
+                                <div class="mini-progress"><div class="mini-progress-fill" style="width: {{ candidate.soft_skill_score|default(0) }}%;"></div></div>
+                            </div>
+                        </div>
+
+                        <div class="two-col">
+                            <div class="detail-card">
+                                <h3>Matched Skills</h3>
+                                <div class="pill-wrap">
+                                    {% if candidate.matched_skills %}
+                                        {% for skill in candidate.matched_skills[:15] %}
+                                            <span class="tag positive">{{ skill }}</span>
+                                        {% endfor %}
+                                    {% else %}
+                                        <span class="muted">No matched skills detected.</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="detail-card">
+                                <h3>Missing Skills</h3>
+                                <div class="pill-wrap">
+                                    {% if candidate.missing_skills %}
+                                        {% for skill in candidate.missing_skills[:15] %}
+                                            <span class="tag negative">{{ skill }}</span>
+                                        {% endfor %}
+                                    {% else %}
+                                        <span class="muted">No major missing skills detected.</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="two-col">
+                            <div class="detail-card">
+                                <h3>Strengths</h3>
+                                <ul class="compact-list">
+                                    {% if candidate.strengths %}
+                                        {% for item in candidate.strengths %}
+                                            <li>{{ item }}</li>
+                                        {% endfor %}
+                                    {% else %}
+                                        <li>No clear strengths summary generated.</li>
+                                    {% endif %}
+                                </ul>
+                            </div>
+
+                            <div class="detail-card">
+                                <h3>Weaknesses</h3>
+                                <ul class="compact-list">
+                                    {% if candidate.weaknesses %}
+                                        {% for item in candidate.weaknesses %}
+                                            <li>{{ item }}</li>
+                                        {% endfor %}
+                                    {% else %}
+                                        <li>No major weaknesses summary generated.</li>
+                                    {% endif %}
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="detail-card evidence-card">
+                            <h3>Resume vs Job Description Evidence</h3>
+                            {% if candidate.evidence_matches %}
+                                <div class="evidence-list">
+                                    {% for ev in candidate.evidence_matches[:5] %}
+                                        <div class="evidence-item">
+                                            <p><strong>Job:</strong> {{ ev.job_text }}</p>
+                                            <p><strong>Resume:</strong> {{ ev.resume_text }}</p>
+                                            <span class="similarity-badge">Similarity: {{ "%.2f"|format(ev.similarity|default(0)) }}%</span>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <p class="muted">No evidence pairs available.</p>
+                            {% endif %}
+                        </div>
+                    </article>
+                    {% endfor %}
+                </section>
+            {% else %}
+                <section class="panel-card">
+                    <h2>No ranking results available</h2>
+                    <p class="muted">Upload resumes and a job description first.</p>
+                    <a href="/" class="secondary-btn">Back</a>
+                </section>
+            {% endif %}
         </div>
     </div>
 
-    {% if comparison_chart %}
+    {% if results and results|length > 0 %}
     <script>
-        const barCanvas = document.getElementById('rankingChart');
-        if (barCanvas) {
-            const existing = Chart.getChart(barCanvas);
-            if (existing) existing.destroy();
+        const chartLabels = {{ chart_labels|default([])|tojson }};
+        const chartFinalScores = {{ chart_final_scores|default([])|tojson }};
+        const chartSemanticScores = {{ chart_semantic_scores|default([])|tojson }};
+        const chartSkillScores = {{ chart_skill_scores|default([])|tojson }};
+        const chartResponsibilityScores = {{ chart_responsibility_scores|default([])|tojson }};
 
-            new Chart(barCanvas, {
+        const radarLabels = {{ radar_labels|default(["Semantic", "Skills", "Responsibilities", "Experience", "Education", "Soft Skills"])|tojson }};
+        const radarDatasets = {{ radar_datasets|default([])|tojson }};
+
+        const comparisonCtx = document.getElementById('comparisonChart');
+        if (comparisonCtx && chartLabels.length > 0) {
+            new Chart(comparisonCtx, {
                 type: 'bar',
                 data: {
-                    labels: {{ comparison_chart.labels | tojson }},
+                    labels: chartLabels,
                     datasets: [
                         {
                             label: 'Final Score',
-                            data: {{ comparison_chart.match_scores | tojson }},
+                            data: chartFinalScores,
+                            backgroundColor: 'rgba(59, 130, 246, 0.45)',
+                            borderColor: 'rgba(59, 130, 246, 1)',
+                            borderWidth: 1,
                             borderRadius: 8
                         },
                         {
                             label: 'Semantic',
-                            data: {{ comparison_chart.semantic_scores | tojson }},
+                            data: chartSemanticScores,
+                            backgroundColor: 'rgba(244, 114, 182, 0.35)',
+                            borderColor: 'rgba(244, 114, 182, 1)',
+                            borderWidth: 1,
                             borderRadius: 8
                         },
                         {
                             label: 'Skills',
-                            data: {{ comparison_chart.skill_scores | tojson }},
+                            data: chartSkillScores,
+                            backgroundColor: 'rgba(251, 146, 60, 0.35)',
+                            borderColor: 'rgba(251, 146, 60, 1)',
+                            borderWidth: 1,
                             borderRadius: 8
                         },
                         {
                             label: 'Responsibilities',
-                            data: {{ comparison_chart.responsibility_scores | tojson }},
+                            data: chartResponsibilityScores,
+                            backgroundColor: 'rgba(250, 204, 21, 0.35)',
+                            borderColor: 'rgba(250, 204, 21, 1)',
+                            borderWidth: 1,
                             borderRadius: 8
                         }
                     ]
@@ -411,73 +377,61 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     animation: false,
-                    responsiveAnimationDuration: 0,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: { callback: (value) => value + '%' }
+                        }
+                    },
                     plugins: {
                         legend: {
                             position: 'top'
-                        },
-                        tooltip: {
-                            mode: 'index',
-                            intersect: false
-                        }
-                    },
-                    scales: {
-                        y: {
-                            min: 0,
-                            max: 100,
-                            ticks: {
-                                callback: function(value) {
-                                    return value + '%';
-                                }
-                            }
                         }
                     }
                 }
             });
         }
-    </script>
-    {% endif %}
 
-    {% if radar_chart %}
-    <script>
-        const radarCanvas = document.getElementById('radarChart');
-        if (radarCanvas) {
-            const existingRadar = Chart.getChart(radarCanvas);
-            if (existingRadar) existingRadar.destroy();
+        const radarCtx = document.getElementById('radarChart');
+        if (radarCtx && radarDatasets.length > 0) {
+            const radarColors = [
+                ['rgba(59,130,246,0.18)', 'rgba(59,130,246,1)'],
+                ['rgba(244,114,182,0.18)', 'rgba(244,114,182,1)'],
+                ['rgba(34,197,94,0.18)', 'rgba(34,197,94,1)']
+            ];
 
-            new Chart(radarCanvas, {
+            new Chart(radarCtx, {
                 type: 'radar',
                 data: {
-                    labels: {{ radar_chart.labels | tojson }},
-                    datasets: [
-                        {% for ds in radar_chart.datasets %}
-                        {
-                            label: {{ ds.label | tojson }},
-                            data: {{ ds.data | tojson }},
-                            fill: true
-                        }{% if not loop.last %},{% endif %}
-                        {% endfor %}
-                    ]
+                    labels: radarLabels,
+                    datasets: radarDatasets.map((item, index) => ({
+                        label: item.label,
+                        data: item.data,
+                        backgroundColor: radarColors[index % radarColors.length][0],
+                        borderColor: radarColors[index % radarColors.length][1],
+                        pointBackgroundColor: radarColors[index % radarColors.length][1],
+                        borderWidth: 2
+                    }))
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     animation: false,
-                    responsiveAnimationDuration: 0,
-                    plugins: {
-                        legend: {
-                            position: 'top'
-                        }
-                    },
                     scales: {
                         r: {
+                            beginAtZero: true,
                             min: 0,
                             max: 100,
                             ticks: {
-                                callback: function(value) {
-                                    return value + '%';
-                                }
+                                stepSize: 20,
+                                callback: (value) => value + '%'
                             }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top'
                         }
                     }
                 }
@@ -485,21 +439,5 @@
         }
     </script>
     {% endif %}
-
-    <script>
-        document.querySelectorAll('.shortlist-btn').forEach(btn => {
-            btn.addEventListener('click', function () {
-                this.textContent = 'Shortlisted';
-                this.classList.add('active-shortlist');
-            });
-        });
-
-        document.querySelectorAll('.reject-btn').forEach(btn => {
-            btn.addEventListener('click', function () {
-                this.textContent = 'Rejected';
-                this.classList.add('active-reject');
-            });
-        });
-    </script>
 </body>
 </html>

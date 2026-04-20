@@ -15,8 +15,7 @@ Why this file matters:
 """
 
 from io import BytesIO
-
-import fitz  # PyMuPDF
+import pymupdf as fitz
 from PyPDF2 import PdfReader
 
 

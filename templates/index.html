@@ -3,127 +3,71 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Resume Screener & Job Match Scorer</title>
+    <title>AI Resume Screener</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <div class="page">
-        <div class="container">
+<div class="page">
+    <div class="container dashboard">
 
-            <section class="hero-card modern-hero">
-                <div class="hero-badge">Version 2.0 Ready</div>
-
+        <!-- HERO -->
+        <section class="hero-card">
+            <div>
+                <p class="eyebrow">Version 4.0</p>
                 <h1>AI Resume Screener & Job Match Scorer</h1>
-
-                <p class="subtitle">
-                    Upload one or more resumes, paste a job description, and get an ATS-style ranking
-                    with semantic matching, skill coverage, experience alignment, and explainable insights.
+                <p class="hero-subtitle">
+                    Multi-factor AI ranking using semantic matching, skills, responsibilities,
+                    experience, education, and explainable insights.
                 </p>
+            </div>
+        </section>
 
-                <p class="subtext">
-                    Built to move beyond simple keyword matching and provide smarter, more useful
-                    candidate evaluation across different job domains.
-                </p>
+        <!-- MAIN GRID -->
+        <section class="summary-grid">
 
-                <div class="hero-highlights">
-                    <div class="highlight-pill">Multi-Resume Ranking</div>
-                    <div class="highlight-pill">Semantic Fit</div>
-                    <div class="highlight-pill">Skill Gap Analysis</div>
-                    <div class="highlight-pill">Explainable Scoring</div>
-                </div>
+            <!-- LEFT INFO -->
+            <div class="info-card">
+                <h3>What this tool does</h3>
+                <ul class="compact-list">
+                    <li>Ranks resumes using AI scoring</li>
+                    <li>Works for ALL job domains</li>
+                    <li>Finds missing skills automatically</li>
+                    <li>Explains WHY a candidate ranks higher</li>
+                    <li>Provides actionable improvements</li>
+                </ul>
 
-                <form action="/analyze" method="POST" enctype="multipart/form-data" class="main-form">
-                    <div class="form-grid">
-                        <div class="form-group upload-box">
-                            <label for="resumes">Upload Resume(s)</label>
-                            <input type="file" name="resumes" id="resumes" accept=".pdf" multiple required>
-                            <small>Upload one or more PDF resumes for comparison.</small>
-                        </div>
+                <h3 style="margin-top:20px;">How it works</h3>
+                <ul class="compact-list">
+                    <li>Upload resumes (PDF)</li>
+                    <li>Paste job description</li>
+                    <li>AI analyzes + ranks candidates</li>
+                </ul>
+            </div>
 
-                        <div class="form-group textarea-box">
-                            <label for="job_description">Paste Job Description</label>
-                            <textarea
-                                name="job_description"
-                                id="job_description"
-                                rows="12"
-                                placeholder="Paste the full job description here..."
-                                required
-                            ></textarea>
-                            <small>Use the complete JD for better scoring accuracy.</small>
-                        </div>
-                    </div>
+            <!-- RIGHT FORM -->
+            <div class="info-card">
+                <h3>Analyze Candidates</h3>
 
-                    <div class="form-actions">
-                        <button type="submit" class="primary-btn">Analyze Resumes</button>
-                    </div>
+                <form action="/analyze" method="POST" enctype="multipart/form-data">
+
+                    <label><strong>Upload Resume(s)</strong></label>
+                    <input type="file" name="resumes" multiple required>
+
+                    <label style="margin-top:15px;"><strong>Job Description</strong></label>
+                    <textarea name="job_description"
+                              placeholder="Paste full job description here..."
+                              required></textarea>
+
+                    <button type="submit" class="primary-btn">
+                        Analyze Resumes
+                    </button>
+
                 </form>
-            </section>
+            </div>
 
-            <section class="stats-strip">
-                <div class="mini-stat-card">
-                    <h3>Multi-Factor Scoring</h3>
-                    <p>Semantic fit, skills, responsibilities, experience, and education.</p>
-                </div>
-                <div class="mini-stat-card">
-                    <h3>Role-Aware Analysis</h3>
-                    <p>Designed to work beyond only computer-related job descriptions.</p>
-                </div>
-                <div class="mini-stat-card">
-                    <h3>Actionable Insights</h3>
-                    <p>See missing skills, strengths, weaknesses, and why candidates rank higher.</p>
-                </div>
-            </section>
+        </section>
 
-            <section class="two-column improved-grid">
-                <div class="section-card feature-card">
-                    <div class="card-icon">📌</div>
-                    <h2>What this tool checks</h2>
-                    <ul>
-                        <li>Overall resume-to-job fit</li>
-                        <li>Semantic relevance to the job description</li>
-                        <li>Matched and missing skills</li>
-                        <li>Experience and project alignment</li>
-                        <li>Education fit for the role</li>
-                        <li>Actionable improvement suggestions</li>
-                    </ul>
-                </div>
-
-                <div class="section-card feature-card">
-                    <div class="card-icon">🚀</div>
-                    <h2>Platform highlights</h2>
-                    <ul>
-                        <li>Multiple resume upload and ranking</li>
-                        <li>Improved PDF parsing with fallback support</li>
-                        <li>Section-aware resume understanding</li>
-                        <li>Skill normalization and category grouping</li>
-                        <li>Explainable scoring breakdown</li>
-                        <li>Exportable analysis report</li>
-                    </ul>
-                </div>
-            </section>
-
-            <section class="workflow-section">
-                <h2>How it works</h2>
-                <div class="workflow-grid">
-                    <div class="workflow-card">
-                        <span class="step-number">1</span>
-                        <h3>Upload Resumes</h3>
-                        <p>Add one or more PDF resumes for comparison.</p>
-                    </div>
-                    <div class="workflow-card">
-                        <span class="step-number">2</span>
-                        <h3>Paste Job Description</h3>
-                        <p>Provide the full role requirements and responsibilities.</p>
-                    </div>
-                    <div class="workflow-card">
-                        <span class="step-number">3</span>
-                        <h3>Analyze & Rank</h3>
-                        <p>Get scores, insights, missing skills, and ranked candidates.</p>
-                    </div>
-                </div>
-            </section>
-
-        </div>
     </div>
+</div>
 </body>
 </html>
